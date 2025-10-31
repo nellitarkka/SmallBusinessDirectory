@@ -7,3 +7,9 @@ A web-based Small Business Vendor Directory where vendors can post listings for 
 3. Berin Venedik
 4. Bianca-Gabriela Leoveanu
 5. Tun Wellens
+
+# How to see the files
+
+All project-related documents are available in the Docs branch of the repository.
+Each file provides detailed information about specific aspects of the system analysis and design.
+If a document does not render directly in GitHub’s preview, it can be downloaded and opened locally using any standard PDF reader.
