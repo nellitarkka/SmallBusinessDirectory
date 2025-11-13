@@ -1,4 +1,4 @@
-# Database Design 
+# Database Design
 
 This document describes the relational database design for the **Small Business Vendor Directory** project.
 The schema is based on the project’s **functional requirements**, **user stories**, **use-case descriptions**, and **domain model**.
@@ -166,3 +166,61 @@ It defines:
 * Indexes for search and filtering
 
 This schema is synchronized with the conceptual ERD described above.
+
+---
+
+# 5. Week 2 – Migrations & Seed Data
+
+Week 2 introduces the **initial database migrations** and the **seed dataset** used for testing and backend development.
+
+## ✔️ Added Files
+
+### **`database/migrations/001_initial_schema.sql`**
+
+Implements the full relational schema defined in Week 1 as a forward-only migration.
+Includes all core tables:
+
+* users
+* vendors
+* listings
+* categories
+* listing_categories
+* favorites
+* messages
+* reports
+* admin_actions
+* email_verification_tokens
+* password_reset_tokens
+
+All constraints, foreign keys, and integrity rules are included.
+
+---
+
+### **`database/migrations/002_indexes_and_extensions.sql`**
+
+Adds:
+
+* `pg_trgm` extension for improved text search
+* GIN index on listing titles
+* Filter indexes for city and status
+
+These indexes improve performance for search and filtering functionality.
+
+---
+
+### **`database/seed.sql`**
+
+Provides realistic initial data for development and testing:
+
+* Admin, vendor, and customer users
+* Vendor profile
+* Example listings
+* Categories
+* Listing–category relations
+* Favorites
+* Messages
+* Reports
+* Admin actions
+* Email verification and password reset tokens
+
+This dataset ensures all major features can be tested without manually entering values.
