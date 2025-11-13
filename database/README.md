@@ -56,7 +56,6 @@ No errors were returned, and test data appeared as expected.
 - Add **foreign key constraints** between `vendors`, `listings`, and `reviews`.
 - Create additional indexes for faster search and filtering.
 - Implement and seed the **reviews** table.
-- Export and include the **ER diagram** from Supabase Schema Visualizer.
 
 ---
 
@@ -64,3 +63,21 @@ No errors were returned, and test data appeared as expected.
 - This database is hosted on Supabase and managed online.  
 - No local `.env` configuration is required yet.  
 - SQL scripts are versioned here for reproducibility and team collaboration.
+
+## Week 2 — Construction & Testing (Database)
+
+**New SQL scripts:**
+- `week2_alter.sql`: added constraints, enum status, indexes, and views.
+- `week2_seed.sql`: inserted additional listings and reviews.
+- `week2_queries.sql`: includes queries to test the new features.
+
+### ✅ How to apply:
+1. Run `week2_alter.sql`
+2. Run `week2_seed.sql`
+3. Test queries from `week2_queries.sql`
+
+### 🔍 Optional:
+After fixing vendor emails, validate the constraint:
+```sql
+ALTER TABLE public.vendors VALIDATE CONSTRAINT chk_email_format;
+```
