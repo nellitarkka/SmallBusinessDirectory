@@ -224,3 +224,30 @@ Provides realistic initial data for development and testing:
 * Email verification and password reset tokens
 
 This dataset ensures all major features can be tested without manually entering values.
+
+---
+
+# 6. Week 3 – Query Layer (Views)
+
+Week 3 introduces a lightweight database query layer implemented directly in SQL using views.
+
+The following migration was added:
+
+- `database/migrations/003_views.sql` – defines:
+  - `public_listings_view`
+  - `vendor_listings_view`
+  - `user_favorites_view`
+  - `open_reports_view`
+
+The views are documented in:
+
+- `database/queries_and_views.md`
+
+These views provide structured, reusable read models for the backend:
+
+- public listing search and browsing,
+- vendor dashboards,
+- user favorites,
+- admin moderation of reports.
+
+Backend developers can query these views instead of manually joining multiple tables, which keeps application code simpler and ensures consistent behaviour across the system.
