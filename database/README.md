@@ -251,3 +251,28 @@ These views provide structured, reusable read models for the backend:
 - admin moderation of reports.
 
 Backend developers can query these views instead of manually joining multiple tables, which keeps application code simpler and ensures consistent behaviour across the system.
+
+---
+
+# 7. Week 4 – Database Testing
+
+Week 4 introduces a structured testing approach for the database.
+
+The following files were added under `database/tests`:
+
+- `test_plan.md` – a detailed test plan describing:
+  - schema and constraint tests,
+  - core CRUD and relationship tests,
+  - view/query-layer tests,
+  - seed data sanity checks.
+- `manual_test_queries.sql` – SQL scripts to execute the tests manually in Supabase or any Postgres client.
+
+These tests verify that:
+
+- constraints and relationships behave as intended,
+- only valid data can be inserted,
+- cascading deletes work correctly,
+- the query views return consistent and correctly filtered data,
+- seeded data is coherent and ready for backend integration.
+
+This completes the initial testing phase for the database in Deliverable II and provides a solid basis for future automated tests (e.g. in CI).
