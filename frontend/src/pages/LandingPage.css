@@ -1,0 +1,221 @@
+.landing-root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f3f4f6;
+  }
+  
+  .landing-main {
+    flex: 1;
+    padding: 2rem 3rem 3rem;
+  }
+
+  .landing-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+  }
+  
+  
+  .landing-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  
+  .landing-search-input {
+    flex: 1 1 220px;
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  
+  .landing-search-input:focus {
+    border-color: #111827;
+  }
+  
+  .landing-select {
+    flex: 0 0 180px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-size: 0.9rem;
+  }
+  
+  /* vendor card enhancements */
+  
+  .vendor-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .vendor-save-btn {
+    border: none;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #111827;
+  }
+  
+  .vendor-save-btn--active {
+    background: #111827;
+    color: #ffffff;
+  }
+  
+  .vendor-card-footer {
+    margin-top: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .vendor-card-secondary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  
+  .vendor-secondary-btn {
+    border: none;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #111827;
+  }
+  
+  /* mobile tweaks */
+  @media (max-width: 640px) {
+    .landing-filters {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .vendor-card-footer {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  
+  
+  /* Hero */
+  .landing-hero-text h1 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+  
+  .landing-hero-text p {
+    font-size: 1rem;
+    color: #4b5563;
+  }
+  
+  /* Vendors section */
+  .landing-vendors-section {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .landing-vendors-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .landing-vendors-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .landing-vendors-header p {
+    font-size: 0.95rem;
+    color: #6b7280;
+  }
+  
+  /* Vendor grid */
+  .landing-vendor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  .vendor-card-hours {
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+  
+  /* Card style – similar to before, but bigger and full width */
+  .vendor-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .vendor-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .vendor-card-category {
+    font-size: 0.9rem;
+    color: #6366f1;
+    font-weight: 500;
+  }
+  
+  .vendor-card-location {
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+  
+  .vendor-card-description {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-top: 0.25rem;
+    flex: 1;
+  }
+  
+  .vendor-card-btn {
+    margin-top: 0.75rem;
+    align-self: flex-start;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    background: #111827;
+    color: #ffffff;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  
+  .vendor-card-btn:hover {
+    background: #1f2933;
+    transform: translateY(-1px);
+  }
+  
+  /* Smaller screens */
+  @media (max-width: 768px) {
+    .landing-main {
+      padding: 1.5rem 1.25rem 2.5rem;
+    }
+  
+    .landing-hero-text h1 {
+      font-size: 2rem;
+    }
+  }
+  
