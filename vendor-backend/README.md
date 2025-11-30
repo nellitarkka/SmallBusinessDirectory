@@ -2,7 +2,7 @@
 
 REST API backend for a Small Business Vendor Directory platform that connects customers with local service providers in Luxembourg.
 
-## 📋 Project Overview
+##  Project Overview
 
 This backend API provides comprehensive functionality for:
 - **User Management**: Customer, vendor, and admin registration/authentication
@@ -11,7 +11,7 @@ This backend API provides comprehensive functionality for:
 - **Favorites System**: Users can save their preferred listings
 - **Category Management**: Organize services into categories
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 - **Runtime**: Node.js v20+
 - **Framework**: Express.js
@@ -20,7 +20,7 @@ This backend API provides comprehensive functionality for:
 - **Testing**: Jest + Supertest
 - **Security**: bcrypt, helmet, cors
 
-## 📦 Installation
+##  Installation
 
 ### Prerequisites
 - Node.js v20 or higher
@@ -57,7 +57,7 @@ npm run dev
 
 The server will start at `http://localhost:3000`
 
-## 🧪 Testing
+##  Testing
 
 Run the complete test suite:
 ```bash
@@ -65,14 +65,14 @@ npm test
 ```
 
 **Test Results**: 25/25 tests passing (100% success rate)
-- Authentication: 9/9 tests ✅
-- Listings: 6/6 tests ✅
-- Categories: 4/4 tests ✅
-- Favorites: 6/6 tests ✅
+- Authentication: 9/9 tests 
+- Listings: 6/6 tests 
+- Categories: 4/4 tests 
+- Favorites: 6/6 tests 
 
 **Test Coverage**: 55.36% overall
 
-## 📚 API Documentation
+## API Documentation
 
 ### Base URL
 ```
@@ -88,7 +88,7 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-## 🔐 Authentication Endpoints
+##  Authentication Endpoints
 
 ### POST /api/auth/register
 Register a new user (customer, vendor, or admin)
@@ -124,7 +124,7 @@ Get current user profile (requires authentication)
 
 ---
 
-## 📝 Listings Endpoints
+## Listings Endpoints
 
 ### GET /api/listings
 Get all listings (public)
@@ -151,7 +151,7 @@ Delete listing (vendor only, own listings)
 
 ---
 
-## 🏷️ Categories Endpoints
+## Categories Endpoints
 
 ### GET /api/categories
 Get all categories (public)
@@ -170,7 +170,7 @@ Delete category (admin only)
 
 ---
 
-## ⭐ Favorites Endpoints
+##  Favorites Endpoints
 
 ### POST /api/favorites/:listingId
 Add listing to favorites (requires auth)
@@ -202,7 +202,7 @@ Remove from favorites (requires auth)
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 ```
 vendor-backend/
 ├── src/
@@ -222,7 +222,7 @@ vendor-backend/
 └── README.md
 ```
 
-## 👥 Collaboration Workflow
+##  Collaboration Workflow
 
 **Branching Strategy:**
 - `main` - Production code
@@ -236,7 +236,7 @@ vendor-backend/
 Example: feat: add favorites endpoint
 ```
 
-## 🚀 Deployment
+##  Deployment
 
 **Environment Variables:**
 ```env
@@ -246,24 +246,17 @@ JWT_SECRET=your_secret
 NODE_ENV=production
 ```
 
-## 📊 Database
+##  Database
 
 PostgreSQL with tables:
 - users, vendors, listings
 - categories, favorites
 - listing_categories (junction table)
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork repository
 2. Create feature branch
 3. Write tests
 4. Submit pull request
 
-## 📝 License
-
-Software Engineering Course Project
-
-## 👨‍💻 Authors
-
-Backend API Development Team
