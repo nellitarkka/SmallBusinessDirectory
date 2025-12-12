@@ -113,18 +113,25 @@ exports.getMine = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.userId;
+    
+    console.log(`[UPDATE] Listing ${id} by user ${userId}`);
     
     // Check if listing exists and belongs to this vendor
     const listing = await Listing.findByIdWithVendor(id);
     
     if (!listing) {
+      console.log(`[UPDATE] Listing ${id} not found`);
       return res.status(404).json({ 
         status: 'error', 
         message: 'Listing not found' 
       });
     }
     
-    if (listing.vendor_user_id !== req.user.userId) {
+    console.log(`[UPDATE] Listing vendor_user_id: ${listing.vendor_user_id}, req.user.userId: ${userId}`);
+    
+    if (listing.vendor_user_id !== userId) {
+      console.log(`[UPDATE] Permission denied - listing belongs to user ${listing.vendor_user_id}`);
       return res.status(403).json({ 
         status: 'error', 
         message: 'You do not have permission to update this listing' 
@@ -137,10 +144,12 @@ exports.update = async (req, res) => {
     if (req.body.title !== undefined) updateData.title = req.body.title;
     if (req.body.description !== undefined) updateData.description = req.body.description;
     if (req.body.city !== undefined) updateData.city = req.body.city;
-    if (req.body.contactEmail !== undefined) updateData.contact_email = req.body.contactEmail;
-    if (req.body.contactPhone !== undefined) updateData.contact_phone = req.body.contactPhone;
-    if (req.body.openingHours !== undefined) updateData.opening_hours = req.body.openingHours;
+    if (req.body.contact_email !== undefined) updateData.contact_email = req.body.contact_email;
+    if (req.body.contact_phone !== undefined) updateData.contact_phone = req.body.contact_phone;
+    if (req.body.opening_hours !== undefined) updateData.opening_hours = req.body.opening_hours;
     if (req.body.status !== undefined) updateData.status = req.body.status;
+    
+    console.log(`[UPDATE] Updating with data:`, updateData);
     
     // Update listing with only provided fields
     const updatedListing = await Listing.update(id, updateData);
