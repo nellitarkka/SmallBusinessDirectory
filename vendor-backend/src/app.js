@@ -14,12 +14,14 @@ const authRoutes = require('./routes/auth');
 const listingRoutes = require('./routes/listings');
 const categoryRoutes = require('./routes/categories');
 const favoriteRoutes = require('./routes/favorites');
+const messageRoutes = require('./routes/messages');
 
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
