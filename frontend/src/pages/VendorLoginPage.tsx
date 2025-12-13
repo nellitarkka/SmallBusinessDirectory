@@ -7,22 +7,20 @@ import { useAuth } from "../auth/AuthContext";
 
 const VendorLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isLoading } = useAuth();
+  const { loginAsVendor } = useAuth();   // <- from AuthContext
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setError("");
 
-    try {
-      await login(email, password);
-      console.log("Vendor logged in:", email);
-      navigate("/vendor/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
-    }
+    // TODO: replace with real vendor auth
+    console.log("Vendor login:", { email, password });
+
+    loginAsVendor(email);
+
+    // later this can go to /vendor/dashboard
+    navigate("/");
   };
 
   return (
@@ -67,10 +65,8 @@ const VendorLoginPage: React.FC = () => {
               />
             </div>
 
-            {error && <p className="auth-error">{error}</p>}
-
-            <button type="submit" className="auth-button" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+            <button type="submit" className="auth-button">
+              Login
             </button>
           </form>
 

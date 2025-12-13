@@ -1,15 +1,15 @@
 import Navbar from "../components/Navbar";
-import { usePublicListings } from "../data/PublicListingsStore";
+import { useVendors } from "../data/VendorStore";
 import { useFavorites } from "../data/FavoritesStore";
 import type { Vendor } from "../data/vendors";
 import "./CustomerDashboardPage.css"; 
 
 const CustomerMyVendorsPage: React.FC = () => {
-  const { listings: vendors } = usePublicListings();
+  const { vendors } = useVendors();
   const { favoriteVendorIds } = useFavorites();
 
   const favoriteVendors: Vendor[] = vendors.filter(
-    (v) => favoriteVendorIds.includes(v.id)
+    (v) => v.status === "approved" && favoriteVendorIds.includes(v.id)
   );
 
   return (

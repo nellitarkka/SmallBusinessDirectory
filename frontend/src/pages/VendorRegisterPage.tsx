@@ -2,18 +2,16 @@ import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./AuthPage.css";
-import { useAuth } from "../auth/AuthContext";
 
 const VendorRegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { register, isLoading } = useAuth();
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -22,20 +20,9 @@ const VendorRegisterPage: React.FC = () => {
       return;
     }
 
-    try {
-      await register({
-        email,
-        password,
-        firstName: businessName.split(" ")[0] || businessName,
-        lastName: businessName.split(" ").slice(1).join(" ") || "",
-        role: "vendor",
-        businessName,
-      });
-      // after successful registration go to vendor dashboard
-      navigate("/vendor/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
-    }
+    console.log("Vendor register:", { businessName, email, password });
+
+    navigate("/login/vendor");
   };
 
   return (
@@ -115,8 +102,8 @@ const VendorRegisterPage: React.FC = () => {
 
             {error && <p className="auth-error">{error}</p>}
 
-            <button type="submit" className="auth-button" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create Vendor Account"}
+            <button type="submit" className="auth-button">
+              Create Vendor Account
             </button>
           </form>
 

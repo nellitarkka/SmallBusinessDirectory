@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
-import { usePublicListings } from "../data/PublicListingsStore";
+import { useVendors } from "../data/VendorStore";
 import { useFavorites } from "../data/FavoritesStore";
 import type { Vendor } from "../data/vendors";
 import "./CustomerDashboardPage.css";
@@ -16,14 +16,16 @@ const CustomerDashboardPage: React.FC = () => {
     null
   );
 
-  const { listings: vendors } = usePublicListings();
-  const { toggleFavorite, isFavorite } = useFavorites();
-  const { addMessage } = useMessages();
-  const { user } = useAuth();
+const { vendors } = useVendors();
+const { toggleFavorite, isFavorite } = useFavorites();
+const { addMessage } = useMessages();
+const { user } = useAuth();
 
-  const [messageText, setMessageText] = useState("");
+const [messageText, setMessageText] = useState("");
 
-  const approvedVendors = vendors;
+
+
+  const approvedVendors = vendors.filter((v) => v.status === "approved");
 
   const handleToggleExpand = (id: VendorId) => {
     setExpandedVendorId((prev) => (prev === id ? null : id));
@@ -44,25 +46,21 @@ const CustomerDashboardPage: React.FC = () => {
     return combined.includes(normalizedSearch);
   });
 
-  const handleSendMessage = async (vendor: Vendor) => {
+  const handleSendMessage = (vendor: Vendor) => {
     if (!messageText.trim()) {
       alert("Please type a message before sending.");
       return;
     }
   
-    try {
-      await addMessage({
-        vendorId: vendor.id,
-        vendorName: vendor.name,
-        customerEmail: user?.email,
-        body: messageText.trim(),
-      });
+    addMessage({
+      vendorId: vendor.id,
+      vendorName: vendor.name,
+      customerEmail: user?.email,
+      content: messageText.trim(),
+    });
   
-      setMessageText("");
-      alert("Your message has been sent.");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to send message");
-    }
+    setMessageText("");
+    alert("Your message has been sent (demo only).");
   };
   
 

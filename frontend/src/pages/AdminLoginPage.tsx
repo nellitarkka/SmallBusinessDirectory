@@ -3,26 +3,39 @@ import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./AuthPage.css";
+import { mockUsers } from "../auth/mockAuth";   // <- no .ts at the end needed
 import { useAuth } from "../auth/AuthContext";
 
 const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isLoading } = useAuth();
+  const { loginAsAdmin } = useAuth();
   const [email, setEmail] = useState("admin@localvendorhub.com"); // prefill for demo
   const [password, setPassword] = useState("admin123");           // prefill for demo
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
-    try {
-      await login(email, password);
-      console.log("Admin logged in:", email);
-      navigate("/admin/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+    // find matching admin in the mockUsers list
+    const adminUser = mockUsers.find(
+      (user) =>
+        user.email === email &&
+        user.password === password &&
+        user.role === "admin"
+    );
+
+    if (!adminUser) {
+      setError("Invalid admin credentials.");
+      return;
     }
+
+    console.log("Admin logged in:", adminUser);
+
+    // ✅ use adminUser here, not mockUser
+    loginAsAdmin(adminUser.email);
+
+    navigate("/admin/dashboard");
   };
 
   return (
@@ -69,8 +82,8 @@ const AdminLoginPage: React.FC = () => {
 
             {error && <p className="auth-error">{error}</p>}
 
-            <button type="submit" className="auth-button" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+            <button type="submit" className="auth-button">
+              Login
             </button>
           </form>
 

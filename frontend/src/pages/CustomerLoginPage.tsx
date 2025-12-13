@@ -7,22 +7,21 @@ import { useAuth } from "../auth/AuthContext";
 
 const CustomerLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isLoading } = useAuth();
+  const { loginAsCustomer } = useAuth();   // <- from AuthContext
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setError("");
 
-    try {
-      await login(email, password);
-      console.log("Customer logged in:", email);
-      navigate("/customer/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
-    }
+    // TODO: replace with real auth later
+    console.log("Customer login:", { email, password });
+
+    
+    loginAsCustomer(email);
+
+    // go to customer dashboard
+    navigate("/customer/dashboard");
   };
 
   return (
@@ -67,10 +66,8 @@ const CustomerLoginPage: React.FC = () => {
               />
             </div>
 
-            {error && <p className="auth-error">{error}</p>}
-
-            <button type="submit" className="auth-button" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+            <button type="submit" className="auth-button">
+              Login
             </button>
           </form>
 
