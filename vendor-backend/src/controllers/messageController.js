@@ -1,192 +1,225 @@
 const Message = require('../models/message');
 
-module.exports = {
-  // Create a new message
-  async create(req, res, next) {
-    try {
-      const { receiverUserId, listingId, subject, body } = req.body;
-      const senderUserId = req.user.id;
+// Send a new message
+exports.sendMessage = async (req, res) => {
+  try {
+    const senderId = req.user.id;
+    const { recipient_id, listing_id, subject, content } = req.body;
 
-      if (!receiverUserId || !listingId || !body) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Missing required fields: receiverUserId, listingId, body'
-        });
-      }
-
-      const message = await Message.create(senderUserId, receiverUserId, listingId, subject || null, body);
-      
-      res.status(201).json({
-        status: 'success',
-        data: message
+    if (!recipient_id || !content) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Recipient ID and content are required'
       });
-    } catch (error) {
-      next(error);
     }
-  },
 
-  // Get all messages for current user
-  async getAll(req, res, next) {
-    try {
-      const userId = req.user.id;
-      const messages = await Message.findByUserId(userId);
-      
-      res.json({
-        status: 'success',
-        data: messages
+    const message = await Message.create(
+      senderId,
+      recipient_id,
+      listing_id || null,
+      subject || '',
+      content
+    );
+
+    res.status(201).json({
+      status: 'success',
+      data: { message }
+    });
+  } catch (error) {
+    console.error('Send message error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get inbox (received messages)
+exports.getInbox = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const messages = await Message.getInbox(userId);
+
+    res.json({
+      status: 'success',
+      data: { messages }
+    });
+  } catch (error) {
+    console.error('Get inbox error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get sent messages
+exports.getSent = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const messages = await Message.getSent(userId);
+
+    res.json({
+      status: 'success',
+      data: { messages }
+    });
+  } catch (error) {
+    console.error('Get sent messages error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get conversation with another user
+exports.getConversation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { otherUserId } = req.params;
+
+    const messages = await Message.getConversation(userId, parseInt(otherUserId));
+
+    res.json({
+      status: 'success',
+      data: { messages }
+    });
+  } catch (error) {
+    console.error('Get conversation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get single message
+exports.getMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const message = await Message.findById(id);
+
+    if (!message) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Message not found'
       });
-    } catch (error) {
-      next(error);
     }
-  },
 
-  // Get received messages
-  async getReceived(req, res, next) {
-    try {
-      const userId = req.user.id;
-      const messages = await Message.findReceivedByUserId(userId);
-      
-      res.json({
-        status: 'success',
-        data: messages
+    // Check if user is sender or recipient
+    if (message.sender_id !== userId && message.recipient_id !== userId) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You do not have access to this message'
       });
-    } catch (error) {
-      next(error);
     }
-  },
 
-  // Get sent messages
-  async getSent(req, res, next) {
-    try {
-      const userId = req.user.id;
-      const messages = await Message.findSentByUserId(userId);
-      
-      res.json({
-        status: 'success',
-        data: messages
+    res.json({
+      status: 'success',
+      data: { message }
+    });
+  } catch (error) {
+    console.error('Get message error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Mark message as read
+exports.markAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const message = await Message.findById(id);
+
+    if (!message) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Message not found'
       });
-    } catch (error) {
-      next(error);
     }
-  },
 
-  // Get conversation with another user for a listing
-  async getConversation(req, res, next) {
-    try {
-      const userId = req.user.id;
-      const { otherUserId, listingId } = req.params;
-
-      if (!otherUserId || !listingId) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Missing required parameters: otherUserId, listingId'
-        });
-      }
-
-      const messages = await Message.findConversation(userId, otherUserId, listingId);
-      
-      res.json({
-        status: 'success',
-        data: messages
+    // Only recipient can mark as read
+    if (message.recipient_id !== userId) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only the recipient can mark message as read'
       });
-    } catch (error) {
-      next(error);
     }
-  },
 
-  // Get single message by ID
-  async getOne(req, res, next) {
-    try {
-      const { id } = req.params;
-      const message = await Message.findById(id);
+    const updatedMessage = await Message.markAsRead(id);
 
-      if (!message) {
-        return res.status(404).json({
-          status: 'error',
-          message: 'Message not found'
-        });
-      }
+    res.json({
+      status: 'success',
+      data: { message: updatedMessage }
+    });
+  } catch (error) {
+    console.error('Mark as read error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
 
-      res.json({
-        status: 'success',
-        data: message
+// Delete message
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const message = await Message.findById(id);
+
+    if (!message) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Message not found'
       });
-    } catch (error) {
-      next(error);
     }
-  },
 
-  // Mark message as read
-  async markAsRead(req, res, next) {
-    try {
-      const { id } = req.params;
-      const message = await Message.markAsRead(id);
-
-      if (!message) {
-        return res.status(404).json({
-          status: 'error',
-          message: 'Message not found'
-        });
-      }
-
-      res.json({
-        status: 'success',
-        data: message
+    // Only sender or recipient can delete
+    if (message.sender_id !== userId && message.recipient_id !== userId) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You do not have permission to delete this message'
       });
-    } catch (error) {
-      next(error);
     }
-  },
 
-  // Mark all messages as read
-  async markAllAsRead(req, res, next) {
-    try {
-      const userId = req.user.id;
-      const messages = await Message.markAllAsReadForUser(userId);
-      
-      res.json({
-        status: 'success',
-        data: messages
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
+    await Message.delete(id);
 
-  // Get unread count
-  async getUnreadCount(req, res, next) {
-    try {
-      const userId = req.user.id;
-      const count = await Message.getUnreadCount(userId);
-      
-      res.json({
-        status: 'success',
-        data: { unreadCount: count }
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
+    res.json({
+      status: 'success',
+      message: 'Message deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete message error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
 
-  // Delete a message
-  async delete(req, res, next) {
-    try {
-      const { id } = req.params;
-      const message = await Message.delete(id);
+// Get unread count
+exports.getUnreadCount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const count = await Message.getUnreadCount(userId);
 
-      if (!message) {
-        return res.status(404).json({
-          status: 'error',
-          message: 'Message not found'
-        });
-      }
-
-      res.json({
-        status: 'success',
-        data: message
-      });
-    } catch (error) {
-      next(error);
-    }
+    res.json({
+      status: 'success',
+      data: { unreadCount: count }
+    });
+  } catch (error) {
+    console.error('Get unread count error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
   }
 };

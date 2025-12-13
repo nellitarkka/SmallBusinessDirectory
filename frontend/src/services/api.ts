@@ -1,229 +1,235 @@
-import axios from 'axios';
+const API_BASE_URL = 'http://localhost:3000/api';
 
-// Configure the API base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// Helper to get token from localStorage
+const getToken = () => localStorage.getItem('token');
 
-// Create axios instance
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
+// Helper for API calls
+async function apiCall(endpoint: string, options: RequestInit = {}) {
+  const token = getToken();
+  
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-  },
-});
+  };
 
-// Add token to requests if it exists
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  // Add any custom headers from options
+  if (options.headers) {
+    Object.assign(headers, options.headers);
+  }
+
+  // Add authorization token if available
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.message || 'API request failed');
+  }
+
+  return data;
+}
+
+// ==================== AUTH API ====================
+export const authAPI = {
+  register: async (email: string, password: string, name: string, role: string) => {
+    const data = await apiCall('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, role }),
+    });
+    
+    // Save token to localStorage
+    if (data.status === 'success' && data.data.token) {
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Export API endpoints
-export const messageAPI = {
-  // Get all messages for current user
-  async getAll() {
-    const response = await apiClient.get('/messages');
-    return response.data.data;
+    
+    return data;
   },
 
-  // Get received messages
-  async getReceived() {
-    const response = await apiClient.get('/messages/received');
-    return response.data.data;
+  login: async (email: string, password: string) => {
+    const data = await apiCall('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    
+    // Save token to localStorage
+    if (data.status === 'success' && data.data.token) {
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
+    }
+    
+    return data;
+  },
+
+  getProfile: async () => {
+    return await apiCall('/auth/profile');
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  },
+};
+
+// ==================== LISTINGS API (Vendors) ====================
+export const listingsAPI = {
+  // Get all listings with optional filters
+  getAll: async (filters?: { city?: string; category?: string; search?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.city) params.append('city', filters.city);
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.search) params.append('search', filters.search);
+    
+    const queryString = params.toString();
+    return await apiCall(`/listings${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Get single listing by ID
+  getById: async (id: number | string) => {
+    return await apiCall(`/listings/${id}`);
+  },
+
+  // Create new listing (vendors only)
+  create: async (listingData: {
+    business_name: string;
+    description: string;
+    address: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    phone: string;
+    email: string;
+    website?: string;
+    category_id: number;
+  }) => {
+    return await apiCall('/listings', {
+      method: 'POST',
+      body: JSON.stringify(listingData),
+    });
+  },
+
+  // Update listing (vendors only, must own the listing)
+  update: async (id: number | string, updates: Partial<{
+    business_name: string;
+    description: string;
+    address: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    phone: string;
+    email: string;
+    website: string;
+    category_id: number;
+  }>) => {
+    return await apiCall(`/listings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  // Delete listing (vendors only, must own the listing)
+  delete: async (id: number | string) => {
+    return await apiCall(`/listings/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ==================== CATEGORIES API ====================
+export const categoriesAPI = {
+  getAll: async () => {
+    return await apiCall('/categories');
+  },
+
+  getById: async (id: number | string) => {
+    return await apiCall(`/categories/${id}`);
+  },
+};
+
+// ==================== FAVORITES API ====================
+export const favoritesAPI = {
+  // Add a listing to favorites
+  add: async (listingId: number | string) => {
+    return await apiCall(`/favorites/${listingId}`, {
+      method: 'POST',
+    });
+  },
+
+  // Get all user's favorites
+  getAll: async () => {
+    return await apiCall('/favorites');
+  },
+
+  // Check if a listing is favorited
+  check: async (listingId: number | string) => {
+    return await apiCall(`/favorites/${listingId}/check`);
+  },
+
+  // Remove a listing from favorites
+  remove: async (listingId: number | string) => {
+    return await apiCall(`/favorites/${listingId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ==================== MESSAGES API ====================
+export const messagesAPI = {
+  // Send a message
+  send: async (recipientId: number, content: string, listingId?: number, subject?: string) => {
+    return await apiCall('/messages', {
+      method: 'POST',
+      body: JSON.stringify({
+        recipient_id: recipientId,
+        listing_id: listingId,
+        subject: subject || '',
+        content
+      }),
+    });
+  },
+
+  // Get inbox
+  getInbox: async () => {
+    return await apiCall('/messages/inbox');
   },
 
   // Get sent messages
-  async getSent() {
-    const response = await apiClient.get('/messages/sent');
-    return response.data.data;
+  getSent: async () => {
+    return await apiCall('/messages/sent');
   },
 
-  // Get conversation between two users
-  async getConversation(otherUserId: number, listingId: number) {
-    const response = await apiClient.get(`/messages/conversation/${otherUserId}/${listingId}`);
-    return response.data.data;
-  },
-
-  // Create a new message
-  async create(data: {
-    receiverUserId: number;
-    listingId: number;
-    subject?: string;
-    body: string;
-  }) {
-    const response = await apiClient.post('/messages', data);
-    return response.data.data;
+  // Get conversation with another user
+  getConversation: async (otherUserId: number) => {
+    return await apiCall(`/messages/conversation/${otherUserId}`);
   },
 
   // Get single message
-  async getOne(id: number) {
-    const response = await apiClient.get(`/messages/${id}`);
-    return response.data.data;
+  getById: async (id: number) => {
+    return await apiCall(`/messages/${id}`);
   },
 
-  // Mark message as read
-  async markAsRead(id: number) {
-    const response = await apiClient.patch(`/messages/${id}/read`);
-    return response.data.data;
+  // Mark as read
+  markAsRead: async (id: number) => {
+    return await apiCall(`/messages/${id}/read`, {
+      method: 'PUT',
+    });
   },
 
-  // Mark all messages as read
-  async markAllAsRead() {
-    const response = await apiClient.patch('/messages/read/all');
-    return response.data.data;
+  // Delete message
+  delete: async (id: number) => {
+    return await apiCall(`/messages/${id}`, {
+      method: 'DELETE',
+    });
   },
 
   // Get unread count
-  async getUnreadCount() {
-    const response = await apiClient.get('/messages/unread/count');
-    return response.data.data.unreadCount;
-  },
-
-  // Delete a message
-  async delete(id: number) {
-    const response = await apiClient.delete(`/messages/${id}`);
-    return response.data.data;
+  getUnreadCount: async () => {
+    return await apiCall('/messages/unread-count');
   },
 };
-
-export const listingAPI = {
-  // Get all listings
-  async getAll(filters?: { city?: string; category?: string; search?: string }) {
-    const response = await apiClient.get('/listings', { params: filters });
-    return response.data.data;
-  },
-
-  // Get single listing
-  async getOne(id: number) {
-    const response = await apiClient.get(`/listings/${id}`);
-    return response.data.data;
-  },
-
-  // Create listing (vendor only)
-  async create(data: any) {
-    const response = await apiClient.post('/listings', data);
-    return response.data.data;
-  },
-
-  // Update listing (vendor only)
-  async update(id: number, data: any) {
-    const response = await apiClient.patch(`/listings/${id}`, data);
-    return response.data.data;
-  },
-
-  // Delete listing (vendor only)
-  async delete(id: number) {
-    const response = await apiClient.delete(`/listings/${id}`);
-    return response.data.data;
-  },
-
-  // Get my listings (vendor only)
-  async getMine() {
-    const response = await apiClient.get('/listings/vendor/my-listings');
-    return response.data.data;
-  },
-};
-
-export const favoriteAPI = {
-  // Get all favorites for current user
-  async getAll() {
-    const response = await apiClient.get('/favorites');
-    return response.data.data;
-  },
-
-  // Add favorite
-  async add(listingId: number) {
-    const response = await apiClient.post(`/favorites/${listingId}`);
-    return response.data.data.favorite;
-  },
-
-  // Remove favorite
-  async remove(listingId: number) {
-    await apiClient.delete(`/favorites/${listingId}`);
-    return { listingId };
-  },
-
-  // Check if listing is favorited
-  async isFavorite(listingId: number) {
-    const response = await apiClient.get(`/favorites/${listingId}/check`);
-    return response.data.data.isFavorite;
-  },
-};
-
-export const authAPI = {
-  // Register
-  async register(data: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    role: 'customer' | 'vendor' | 'admin';
-    businessName?: string;
-  }) {
-    const response = await apiClient.post('/auth/register', data);
-    // Backend returns { user, token }
-    if (response.data && response.data.data && response.data.data.token) {
-      localStorage.setItem('authToken', response.data.data.token);
-    }
-    return response.data.data;
-  },
-
-  // Login
-  async login(email: string, password: string) {
-    const response = await apiClient.post('/auth/login', { email, password });
-    if (response.data.data.token) {
-      localStorage.setItem('authToken', response.data.data.token);
-    }
-    return response.data.data;
-  },
-
-  // Logout
-  logout() {
-    localStorage.removeItem('authToken');
-  },
-
-  // Get current user
-  async getCurrentUser() {
-    const response = await apiClient.get('/auth/profile');
-    return response.data.data.user;
-  },
-};
-
-export const categoryAPI = {
-  // Get all categories
-  async getAll() {
-    const response = await apiClient.get('/categories');
-    return response.data.data;
-  },
-
-  // Get single category
-  async getOne(id: number) {
-    const response = await apiClient.get(`/categories/${id}`);
-    return response.data.data;
-  },
-
-  // Create category (admin only)
-  async create(data: { name: string; isActive?: boolean }) {
-    const response = await apiClient.post('/categories', data);
-    return response.data.data;
-  },
-
-  // Update category (admin only)
-  async update(id: number, data: { name?: string; isActive?: boolean }) {
-    const response = await apiClient.patch(`/categories/${id}`, data);
-    return response.data.data;
-  },
-
-  // Delete category (admin only)
-  async delete(id: number) {
-    const response = await apiClient.delete(`/categories/${id}`);
-    return response.data.data;
-  },
-};
-
-export default apiClient;

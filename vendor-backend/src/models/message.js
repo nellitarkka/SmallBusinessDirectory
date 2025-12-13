@@ -2,141 +2,110 @@ const pool = require('../config/database');
 
 const Message = {
   // Create a new message
-  async create(senderUserId, receiverUserId, listingId, subject, body) {
-    try {
-      const query = `
-        INSERT INTO messages (sender_user_id, receiver_user_id, listing_id, subject, body, created_at, is_read)
-        VALUES ($1, $2, $3, $4, $5, NOW(), FALSE)
-        RETURNING *
-      `;
-      
-      const result = await pool.query(query, [senderUserId, receiverUserId, listingId, subject, body]);
-      return result.rows[0];
-    } catch (error) {
-      throw error;
-    }
+  create: async (senderId, recipientId, listingId, subject, content) => {
+    const query = `
+      INSERT INTO messages (sender_id, recipient_id, listing_id, subject, content)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `;
+    const values = [senderId, recipientId, listingId, subject, content];
+    const result = await pool.query(query, values);
+    return result.rows[0];
   },
 
-  // Get all messages for a user (both sent and received)
-  async findByUserId(userId) {
-    try {
-      const query = `
-        SELECT * FROM messages 
-        WHERE sender_user_id = $1 OR receiver_user_id = $1
-        ORDER BY created_at DESC
-      `;
-      
-      const result = await pool.query(query, [userId]);
-      return result.rows;
-    } catch (error) {
-      throw error;
-    }
+  // Get all messages for a user (inbox)
+  getInbox: async (userId) => {
+    const query = `
+      SELECT 
+        m.*,
+        sender.name as sender_name,
+        sender.email as sender_email,
+        l.business_name as listing_name
+      FROM messages m
+      LEFT JOIN users sender ON m.sender_id = sender.id
+      LEFT JOIN listings l ON m.listing_id = l.id
+      WHERE m.recipient_id = $1
+      ORDER BY m.created_at DESC
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
   },
 
-  // Get received messages for a user
-  async findReceivedByUserId(userId) {
-    try {
-      const query = `
-        SELECT * FROM messages 
-        WHERE receiver_user_id = $1
-        ORDER BY created_at DESC
-      `;
-      
-      const result = await pool.query(query, [userId]);
-      return result.rows;
-    } catch (error) {
-      throw error;
-    }
+  // Get all messages sent by a user
+  getSent: async (userId) => {
+    const query = `
+      SELECT 
+        m.*,
+        recipient.name as recipient_name,
+        recipient.email as recipient_email,
+        l.business_name as listing_name
+      FROM messages m
+      LEFT JOIN users recipient ON m.recipient_id = recipient.id
+      LEFT JOIN listings l ON m.listing_id = l.id
+      WHERE m.sender_id = $1
+      ORDER BY m.created_at DESC
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
   },
 
-  // Get sent messages for a user
-  async findSentByUserId(userId) {
-    try {
-      const query = `
-        SELECT * FROM messages 
-        WHERE sender_user_id = $1
-        ORDER BY created_at DESC
-      `;
-      
-      const result = await pool.query(query, [userId]);
-      return result.rows;
-    } catch (error) {
-      throw error;
-    }
+  // Get conversation between two users
+  getConversation: async (user1Id, user2Id) => {
+    const query = `
+      SELECT 
+        m.*,
+        sender.name as sender_name,
+        recipient.name as recipient_name
+      FROM messages m
+      LEFT JOIN users sender ON m.sender_id = sender.id
+      LEFT JOIN users recipient ON m.recipient_id = recipient.id
+      WHERE (m.sender_id = $1 AND m.recipient_id = $2)
+         OR (m.sender_id = $2 AND m.recipient_id = $1)
+      ORDER BY m.created_at ASC
+    `;
+    const result = await pool.query(query, [user1Id, user2Id]);
+    return result.rows;
   },
 
-  // Get conversation between two users for a listing
-  async findConversation(userId1, userId2, listingId) {
-    try {
-      const query = `
-        SELECT * FROM messages 
-        WHERE listing_id = $3 AND (
-          (sender_user_id = $1 AND receiver_user_id = $2) OR
-          (sender_user_id = $2 AND receiver_user_id = $1)
-        )
-        ORDER BY created_at DESC
-      `;
-      
-      const result = await pool.query(query, [userId1, userId2, listingId]);
-      return result.rows;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Get message by ID
-  async findById(messageId) {
-    try {
-      const query = 'SELECT * FROM messages WHERE id = $1';
-      const result = await pool.query(query, [messageId]);
-      return result.rows[0] || null;
-    } catch (error) {
-      throw error;
-    }
+  // Get single message by ID
+  findById: async (id) => {
+    const query = `
+      SELECT 
+        m.*,
+        sender.name as sender_name,
+        sender.email as sender_email,
+        recipient.name as recipient_name,
+        recipient.email as recipient_email,
+        l.business_name as listing_name
+      FROM messages m
+      LEFT JOIN users sender ON m.sender_id = sender.id
+      LEFT JOIN users recipient ON m.recipient_id = recipient.id
+      LEFT JOIN listings l ON m.listing_id = l.id
+      WHERE m.id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
   },
 
   // Mark message as read
-  async markAsRead(messageId) {
-    try {
-      const query = 'UPDATE messages SET is_read = TRUE WHERE id = $1 RETURNING *';
-      const result = await pool.query(query, [messageId]);
-      return result.rows[0];
-    } catch (error) {
-      throw error;
-    }
+  markAsRead: async (id) => {
+    const query = 'UPDATE messages SET read = true WHERE id = $1 RETURNING *';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
   },
 
-  // Mark all messages as read for a user
-  async markAllAsReadForUser(userId) {
-    try {
-      const query = 'UPDATE messages SET is_read = TRUE WHERE receiver_user_id = $1 AND is_read = FALSE RETURNING *';
-      const result = await pool.query(query, [userId]);
-      return result.rows;
-    } catch (error) {
-      throw error;
-    }
+  // Delete message
+  delete: async (id) => {
+    const query = 'DELETE FROM messages WHERE id = $1 RETURNING *';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
   },
 
-  // Delete a message
-  async delete(messageId) {
-    try {
-      const query = 'DELETE FROM messages WHERE id = $1 RETURNING *';
-      const result = await pool.query(query, [messageId]);
-      return result.rows[0] || null;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Get count of unread messages for a user
-  async getUnreadCount(userId) {
-    try {
-      const query = 'SELECT COUNT(*) as count FROM messages WHERE receiver_user_id = $1 AND is_read = FALSE';
-      const result = await pool.query(query, [userId]);
-      return parseInt(result.rows[0].count, 10);
-    } catch (error) {
-      throw error;
-    }
+  // Get unread count for user
+  getUnreadCount: async (userId) => {
+    const query = 'SELECT COUNT(*) as count FROM messages WHERE recipient_id = $1 AND read = false';
+    const result = await pool.query(query, [userId]);
+    return parseInt(result.rows[0].count);
   }
 };
 

@@ -6,35 +6,28 @@ const { authenticate } = require('../middleware/auth');
 // All routes require authentication
 router.use(authenticate);
 
-// IMPORTANT: Static routes MUST come before parameterized routes
-// Get unread count
-router.get('/unread/count', messageController.getUnreadCount);
+// Send a message
+router.post('/', messageController.sendMessage);
 
-// Get received messages
-router.get('/received', messageController.getReceived);
+// Get inbox (received messages)
+router.get('/inbox', messageController.getInbox);
 
 // Get sent messages
 router.get('/sent', messageController.getSent);
 
-// Mark all messages as read
-router.patch('/read/all', messageController.markAllAsRead);
+// Get unread count
+router.get('/unread-count', messageController.getUnreadCount);
 
-// Get conversation between two users
-router.get('/conversation/:otherUserId/:listingId', messageController.getConversation);
+// Get conversation with another user
+router.get('/conversation/:otherUserId', messageController.getConversation);
 
-// Create a new message
-router.post('/', messageController.create);
-
-// Get all messages for current user
-router.get('/', messageController.getAll);
-
-// Get single message by ID
-router.get('/:id', messageController.getOne);
+// Get single message
+router.get('/:id', messageController.getMessage);
 
 // Mark message as read
-router.patch('/:id/read', messageController.markAsRead);
+router.put('/:id/read', messageController.markAsRead);
 
 // Delete message
-router.delete('/:id', messageController.delete);
+router.delete('/:id', messageController.deleteMessage);
 
 module.exports = router;

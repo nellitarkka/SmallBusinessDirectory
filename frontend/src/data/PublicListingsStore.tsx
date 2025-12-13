@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { listingAPI } from "../services/api";
-import type { Vendor } from "./vendors";
+import { listingsAPI } from "../services/api";
+import type { Vendor } from "./VendorStore";
 
 interface PublicListingsContextType {
   listings: Vendor[];
   isLoading: boolean;
   error: string | null;
-  fetchListings: () => Promise<void>;
+  fetchListings: (filters?: { city?: string; category?: string; search?: string }) => Promise<void>;
 }
 
 const PublicListingsContext = createContext<PublicListingsContextType | undefined>(undefined);
@@ -16,29 +16,32 @@ export const PublicListingsProvider = ({ children }: { children: ReactNode }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchListings = async () => {
+  const fetchListings = async (filters?: { city?: string; category?: string; search?: string }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await listingAPI.getAll();
+      const response = await listingsAPI.getAll(filters);
       
-      // Handle the API response structure
-      const listings = Array.isArray(response) ? response : response.listings || [];
-      
-      // Transform listings to vendor format
-      const transformedListings = listings.map((listing: any) => ({
-        id: listing.id || listing.listing_id,
-        name: listing.title,
-        category: Array.isArray(listing.categories) ? listing.categories[0] : listing.category,
-        location: listing.city,
-        description: listing.description,
-        email: listing.contact_email,
-        phone: listing.contact_phone,
-        status: listing.status || "active", // Default to active if not provided
-        openingHours: listing.opening_hours,
-      } as Vendor));
-      
-      setListings(transformedListings);
+      if (response.status === 'success') {
+        // Transform backend listings to Vendor format
+        const transformedListings = response.data.listings.map((listing: any) => ({
+          id: listing.id,
+          name: listing.business_name,
+          category: listing.category_name,
+          location: listing.city,
+          description: listing.description,
+          email: listing.email,
+          phone: listing.phone,
+          address: listing.address,
+          state: listing.state,
+          zip_code: listing.zip_code,
+          website: listing.website,
+          category_id: listing.category_id,
+          status: "approved", // Default status
+        } as Vendor));
+        
+        setListings(transformedListings);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch listings";
       setError(errorMessage);

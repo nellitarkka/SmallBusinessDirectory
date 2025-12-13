@@ -5,146 +5,165 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { messageAPI } from "../services/api";
-import type { Vendor } from "./vendors";
-
-// Reuse vendor's id type
-type VendorId = Vendor["id"];
+import { messagesAPI } from "../services/api";
 
 export interface Message {
-  id: string | number;
-  vendorId?: VendorId;
-  vendorName?: string;
-  senderUserId?: number;
-  receiverUserId?: number;
-  listingId?: number;
-  customerEmail?: string;
+  id: number;
+  sender_id: number;
+  recipient_id: number;
+  listing_id?: number;
   subject?: string;
-  body: string;
-  content?: string; // for backward compatibility
-  createdAt: string;
-  isRead?: boolean;
-  vendorReply?: string;
-  repliedAt?: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  sender_name?: string;
+  sender_email?: string;
+  recipient_name?: string;
+  recipient_email?: string;
+  listing_name?: string;
 }
 
 interface MessagesStore {
   messages: Message[];
+  sentMessages: Message[];
+  unreadCount: number;
   isLoading: boolean;
-  error: string | null;
-  addMessage: (
-    msg: Omit<Message, "id" | "createdAt" | "vendorReply" | "repliedAt">
-  ) => Promise<void>;
-  addReply: (id: string | number, replyText: string) => Promise<void>;
-  fetchMessages: () => Promise<void>;
-  markAsRead: (id: string | number) => Promise<void>;
+  sendMessage: (recipientId: number, content: string, listingId?: number, subject?: string) => Promise<void>;
+  fetchInbox: () => Promise<void>;
+  fetchSent: () => Promise<void>;
+  getConversation: (otherUserId: number) => Promise<Message[]>;
+  markAsRead: (messageId: number) => Promise<void>;
+  deleteMessage: (messageId: number) => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
 }
 
 const MessagesContext = createContext<MessagesStore | undefined>(undefined);
 
 export const MessagesProvider = ({ children }: { children: ReactNode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [sentMessages, setSentMessages] = useState<Message[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch messages from backend
-  const fetchMessages = async () => {
-    setIsLoading(true);
-    setError(null);
+  const sendMessage = async (recipientId: number, content: string, listingId?: number, subject?: string) => {
     try {
-      const data = await messageAPI.getAll();
-      setMessages(data || []);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch messages";
-      setError(errorMessage);
-      console.error("Error fetching messages:", err);
+      setIsLoading(true);
+      const response = await messagesAPI.send(recipientId, content, listingId, subject);
+      if (response.status === 'success') {
+        await fetchSent(); // Refresh sent messages
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Load messages on mount
-  useEffect(() => {
-    // Check if user is authenticated before fetching
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      fetchMessages();
-    }
-  }, []);
-
-  // Add new message
-  const addMessage: MessagesStore["addMessage"] = async (msg) => {
-    setError(null);
+  const fetchInbox = async () => {
     try {
-      const newMsg = await messageAPI.create({
-        receiverUserId: msg.receiverUserId || 0,
-        listingId: msg.listingId || 0,
-        subject: msg.subject,
-        body: msg.body || msg.content || "",
-      });
-
-      setMessages((prev) => [newMsg, ...prev]);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to send message";
-      setError(errorMessage);
-      console.error("Error sending message:", err);
-      throw err;
+      setIsLoading(true);
+      const response = await messagesAPI.getInbox();
+      if (response.status === 'success') {
+        setMessages(response.data.messages);
+      }
+    } catch (error) {
+      console.error('Failed to fetch inbox:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Add reply (for backward compatibility - in real app, this would be a separate message)
-  const addReply: MessagesStore["addReply"] = async (id, replyText) => {
-    setError(null);
+  const fetchSent = async () => {
     try {
-      const message = messages.find((m) => m.id === id);
-      if (message) {
-        await messageAPI.markAsRead(id as number);
-        // Optionally create a reply message - depends on your app structure
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === id
-              ? {
-                  ...m,
-                  vendorReply: replyText,
-                  repliedAt: new Date().toISOString(),
-                }
-              : m
+      setIsLoading(true);
+      const response = await messagesAPI.getSent();
+      if (response.status === 'success') {
+        setSentMessages(response.data.messages);
+      }
+    } catch (error) {
+      console.error('Failed to fetch sent messages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getConversation = async (otherUserId: number): Promise<Message[]> => {
+    try {
+      const response = await messagesAPI.getConversation(otherUserId);
+      if (response.status === 'success') {
+        return response.data.messages;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch conversation:', error);
+      return [];
+    }
+  };
+
+  const markAsRead = async (messageId: number) => {
+    try {
+      const response = await messagesAPI.markAsRead(messageId);
+      if (response.status === 'success') {
+        // Update local state
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === messageId ? { ...msg, read: true } : msg
           )
         );
+        await fetchUnreadCount();
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to add reply";
-      setError(errorMessage);
-      console.error("Error adding reply:", err);
-      throw err;
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
     }
   };
 
-  // Mark message as read
-  const markAsRead = async (id: string | number) => {
-    setError(null);
+  const deleteMessage = async (messageId: number) => {
     try {
-      await messageAPI.markAsRead(id as number);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, isRead: true } : m))
-      );
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to mark as read";
-      setError(errorMessage);
-      console.error("Error marking as read:", err);
+      const response = await messagesAPI.delete(messageId);
+      if (response.status === 'success') {
+        // Remove from local state
+        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+        setSentMessages(prev => prev.filter(msg => msg.id !== messageId));
+      }
+    } catch (error) {
+      console.error('Failed to delete message:', error);
     }
   };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await messagesAPI.getUnreadCount();
+      if (response.status === 'success') {
+        setUnreadCount(response.data.unreadCount);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
+
+  // Fetch inbox and unread count on mount (if user is logged in)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchInbox();
+      fetchUnreadCount();
+    }
+  }, []);
 
   return (
     <MessagesContext.Provider
       value={{
         messages,
+        sentMessages,
+        unreadCount,
         isLoading,
-        error,
-        addMessage,
-        addReply,
-        fetchMessages,
+        sendMessage,
+        fetchInbox,
+        fetchSent,
+        getConversation,
         markAsRead,
+        deleteMessage,
+        fetchUnreadCount,
       }}
     >
       {children}
