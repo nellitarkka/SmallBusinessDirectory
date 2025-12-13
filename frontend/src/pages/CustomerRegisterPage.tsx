@@ -2,16 +2,18 @@ import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./AuthPage.css";
+import { useAuth } from "../auth/AuthContext";
 
 const CustomerRegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { register, isLoading } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -20,11 +22,19 @@ const CustomerRegisterPage: React.FC = () => {
       return;
     }
 
-    // TODO: send to backend
-    console.log("Customer register:", { name, email, password });
-
-    // after successful registration you might redirect to login
-    navigate("/login/customer");
+    try {
+      await register({
+        email,
+        password,
+        firstName: name.split(" ")[0] || name,
+        lastName: name.split(" ").slice(1).join(" ") || "",
+        role: "customer",
+      });
+      // after successful registration go to customer dashboard
+      navigate("/customer/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    }
   };
 
   return (

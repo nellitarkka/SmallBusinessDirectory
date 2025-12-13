@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { useVendors } from "../data/VendorStore";
+import { usePublicListings } from "../data/PublicListingsStore";
 import { useFavorites } from "../data/FavoritesStore";
 import type { Vendor } from "../data/vendors";
 
 import "./LandingPage.css";
 
 const LandingPage: React.FC = () => {
-  const { vendors } = useVendors();
+  const { listings, isLoading } = usePublicListings();
   const { toggleFavorite, isFavorite } = useFavorites();
   const navigate = useNavigate();
 
   // only show approved vendors
-  const approvedVendors = vendors.filter((v) => v.status === "approved");
+  const approvedVendors = listings;
 
   // --- filters state ---
   const [search, setSearch] = useState("");
@@ -161,7 +161,9 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          {sampleVendors.length === 0 ? (
+          {isLoading ? (
+            <p className="landing-empty-state">Loading vendors...</p>
+          ) : sampleVendors.length === 0 ? (
             <p className="landing-empty-state">
               No vendors match your filters yet. Try clearing some filters.
             </p>

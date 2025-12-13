@@ -1,5 +1,5 @@
 // src/pages/VendorDashboardPage.tsx
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import "./VendorDashboardPage.css";
 import { useVendors } from "../data/VendorStore";
@@ -8,32 +8,42 @@ import { useMessages } from "../data/MessagesStore";
 import { useAuth } from "../auth/AuthContext";
 
 const VendorDashboardPage: React.FC = () => {
-  const { vendors, updateVendor, updateVendorStatus } = useVendors();
+  const { vendors, updateVendor, updateVendorStatus, createListing } = useVendors();
   const { messages, addReply } = useMessages();
   const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // vendors that belong to the logged-in vendor (by email)
   const myVendors = vendors.filter(
     (v) => user?.role === "vendor" && v.email === user.email
   );
 
-  const fallbackVendor: Vendor = myVendors[0] ||
-    vendors[0] || {
-      id: 1,
-      name: "Your Business Name",
-      category: "",
-      location: "",
-      description: "",
-      email: user?.email || "",
-      phone: "",
-      status: "draft",
-      openingHours: "",
-    };
+  const fallbackVendor: Vendor = {
+    id: undefined as any,
+    name: "Your Business Name",
+    category: "",
+    location: "",
+    description: "",
+    email: user?.email || "",
+    phone: "",
+    status: "draft",
+    openingHours: "",
+  };
 
   // allow multiple listings via dropdown later if you want
-  const [selectedVendorId] = useState<Vendor["id"]>(fallbackVendor.id);
+  const [selectedVendorId, setSelectedVendorId] = useState<Vendor["id"] | null>(null);
+  
+  // Update selectedVendorId when myVendors changes
+  useEffect(() => {
+    if (myVendors.length > 0 && selectedVendorId === null) {
+      setSelectedVendorId(myVendors[0].id);
+    }
+  }, [myVendors, selectedVendorId]);
+
   const currentVendor =
-    myVendors.find((v) => v.id === selectedVendorId) || fallbackVendor;
+    selectedVendorId ? (myVendors.find((v) => v.id === selectedVendorId) || fallbackVendor) : fallbackVendor;
 
   // form state
   const [name, setName] = useState(currentVendor.name);
@@ -42,7 +52,7 @@ const VendorDashboardPage: React.FC = () => {
   const [description, setDescription] = useState(
     currentVendor.description || ""
   );
-  const [email, setEmail] = useState(currentVendor.email || "");
+  const [email, setEmail] = useState(user?.email || currentVendor.email || ""); // Initialize with user's email
   const [phone, setPhone] = useState(currentVendor.phone || "");
   const [openingHours, setOpeningHours] = useState(
     currentVendor.openingHours || ""
@@ -52,6 +62,45 @@ const VendorDashboardPage: React.FC = () => {
 
   // reply drafts for each message
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+
+  // Update form when selected vendor changes (not when vendor data updates)
+  useEffect(() => {
+    if (selectedVendorId && currentVendor.id !== undefined) {
+      setName(currentVendor.name);
+      setCategory(currentVendor.category || "");
+      setLocation(currentVendor.location || "");
+      setDescription(currentVendor.description || "");
+      setEmail(currentVendor.email || "");
+      setPhone(currentVendor.phone || "");
+      setOpeningHours(currentVendor.openingHours || "");
+    }
+  }, [selectedVendorId]);
+
+  const handleCreateListing = async () => {
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      // Use the user's actual email, not form input
+      const newVendor = await createListing({
+        name,
+        category,
+        location,
+        description,
+        email: user?.email || email, // Use authenticated user's email
+        phone,
+        openingHours,
+      });
+      setSelectedVendorId(newVendor.id);
+      setShowCreateForm(false);
+      setStatusMessage("Listing created successfully!");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to create listing";
+      setSubmitError(errorMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // messages for this vendor
   const vendorMessages = messages.filter(
@@ -79,43 +128,69 @@ const VendorDashboardPage: React.FC = () => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setStatusMessage("");
+    setSubmitError("");
+    setIsSubmitting(true);
 
-    const updatedVendor: Vendor = {
-      ...currentVendor,
-      name,
-      category,
-      location,
-      description,
-      email,
-      phone,
-      openingHours,
-    };
+    try {
+      const updatedVendor: Vendor = {
+        ...currentVendor,
+        name,
+        category,
+        location,
+        description,
+        email,
+        phone,
+        openingHours,
+      };
 
-    updateVendor(updatedVendor);
-    setStatusMessage("Your vendor profile has been saved (demo only).");
+      await updateVendor(updatedVendor);
+      setStatusMessage("Your vendor profile has been saved successfully.");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to save profile";
+      setSubmitError(errorMsg);
+      setStatusMessage("");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSubmitForReview = () => {
-    updateVendorStatus(currentVendor.id, "submitted");
-    setStatusMessage("Your listing has been submitted for review.");
+  const handleSubmitForReview = async () => {
+    setStatusMessage("");
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      await updateVendorStatus(currentVendor.id, "submitted");
+      setStatusMessage("Your listing has been submitted for review.");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to submit for review";
+      setSubmitError(errorMsg);
+      setStatusMessage("");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleChangeReply = (id: string, text: string) => {
+  const handleChangeReply = (id: string | number, text: string) => {
     setReplyDrafts((prev) => ({ ...prev, [id]: text }));
   };
 
-  const handleSendReply = (id: string) => {
+  const handleSendReply = async (id: string | number) => {
     const text = replyDrafts[id]?.trim();
     if (!text) {
       alert("Please type a reply before sending.");
       return;
     }
-    addReply(id, text);
-    setReplyDrafts((prev) => ({ ...prev, [id]: "" }));
-    alert("Reply saved (demo only).");
+    try {
+      await addReply(id, text);
+      setReplyDrafts((prev) => ({ ...prev, [id]: "" }));
+      alert("Reply sent successfully.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to send reply");
+    }
   };
 
   return (
@@ -131,6 +206,133 @@ const VendorDashboardPage: React.FC = () => {
           </p>
         </header>
 
+        {/* Show message if vendor has no listings */}
+        {vendors.length === 0 && !showCreateForm && (
+          <section style={{ padding: "2rem", textAlign: "center", maxWidth: "600px", margin: "2rem auto" }}>
+            <h2>You don't have any listings yet</h2>
+            <p>Create your first listing to get started and let customers find you.</p>
+            <button
+              type="button"
+              className="vendor-submit-button"
+              onClick={() => setShowCreateForm(true)}
+            >
+              Create Your First Listing
+            </button>
+          </section>
+        )}
+
+        {/* Show create form if no listings and user clicked create */}
+        {vendors.length === 0 && showCreateForm && (
+          <section className="vendor-layout">
+            <form className="vendor-form" onSubmit={(e) => { e.preventDefault(); handleCreateListing(); }}>
+              <h2 className="vendor-section-title">Create Your Business Listing</h2>
+              
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="vendor-name">Business name</label>
+                <input
+                  id="vendor-name"
+                  type="text"
+                  className="vendor-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="vendor-category">Category</label>
+                <input
+                  id="vendor-category"
+                  type="text"
+                  className="vendor-input"
+                  placeholder="Bakery, Grocery, Restaurant..."
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                />
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="vendor-location">Location</label>
+                <input
+                  id="vendor-location"
+                  type="text"
+                  className="vendor-input"
+                  placeholder="City / Area"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="vendor-email">Contact email</label>
+                <input
+                  id="vendor-email"
+                  type="email"
+                  className="vendor-input"
+                  placeholder="you@business.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="vendor-phone">Phone number</label>
+                <input
+                  id="vendor-phone"
+                  type="tel"
+                  className="vendor-input"
+                  placeholder="+352 ..."
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="vendor-hours">Opening hours</label>
+                <input
+                  id="vendor-hours"
+                  type="text"
+                  className="vendor-input"
+                  placeholder="e.g. Mon–Fri 9:00–18:00, Sat 10:00–16:00"
+                  value={openingHours}
+                  onChange={(e) => setOpeningHours(e.target.value)}
+                />
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="vendor-description">Description</label>
+                <textarea
+                  id="vendor-description"
+                  className="vendor-textarea"
+                  rows={4}
+                  placeholder="Describe your services and special offers..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              {submitError && (
+                <p style={{ color: "red", marginBottom: "1rem" }}>{submitError}</p>
+              )}
+
+              <button type="submit" className="vendor-save-button" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Listing"}
+              </button>
+
+              <button
+                type="button"
+                className="vendor-save-button"
+                onClick={() => setShowCreateForm(false)}
+                style={{ marginLeft: "1rem", backgroundColor: "#999" }}
+              >
+                Cancel
+              </button>
+            </form>
+          </section>
+        )}
+
+        {/* Show edit form if vendor has listings */}
+        {vendors.length > 0 && currentVendor.id !== undefined && (
         <section className="vendor-layout">
           {/* LEFT: EDIT FORM */}
           <form className="vendor-form" onSubmit={handleSubmit}>
@@ -273,16 +475,21 @@ const VendorDashboardPage: React.FC = () => {
               <p className="vendor-status-message">{statusMessage}</p>
             )}
 
-            <button type="submit" className="vendor-save-button">
-              Save changes
+            {submitError && (
+              <p style={{ color: "red", marginBottom: "1rem" }}>{submitError}</p>
+            )}
+
+            <button type="submit" className="vendor-save-button" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save changes"}
             </button>
 
             <button
               type="button"
               className="vendor-submit-button"
               onClick={handleSubmitForReview}
+              disabled={isSubmitting}
             >
-              Submit for review
+              {isSubmitting ? "Submitting..." : "Submit for review"}
             </button>
 
             <p className="vendor-current-status">
@@ -329,8 +536,9 @@ const VendorDashboardPage: React.FC = () => {
                       type="button"
                       className="vendor-save-button"
                       onClick={() => handleSendReply(m.id)}
+                      disabled={isSubmitting}
                     >
-                      Send reply (demo)
+                      {isSubmitting ? "Sending..." : "Send reply"}
                     </button>
                   </div>
                 ))}
@@ -374,6 +582,7 @@ const VendorDashboardPage: React.FC = () => {
             </article>
           </aside>
         </section>
+        )}
       </main>
     </div>
   );

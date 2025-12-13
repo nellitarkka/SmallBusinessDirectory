@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
-import { useVendors } from "../data/VendorStore";
+import { usePublicListings } from "../data/PublicListingsStore";
 import { useFavorites } from "../data/FavoritesStore";
 import type { Vendor } from "../data/vendors";
 import "./CustomerDashboardPage.css";
@@ -16,16 +16,14 @@ const CustomerDashboardPage: React.FC = () => {
     null
   );
 
-const { vendors } = useVendors();
-const { toggleFavorite, isFavorite } = useFavorites();
-const { addMessage } = useMessages();
-const { user } = useAuth();
+  const { listings: vendors } = usePublicListings();
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { addMessage } = useMessages();
+  const { user } = useAuth();
 
-const [messageText, setMessageText] = useState("");
+  const [messageText, setMessageText] = useState("");
 
-
-
-  const approvedVendors = vendors.filter((v) => v.status === "approved");
+  const approvedVendors = vendors;
 
   const handleToggleExpand = (id: VendorId) => {
     setExpandedVendorId((prev) => (prev === id ? null : id));
@@ -46,21 +44,25 @@ const [messageText, setMessageText] = useState("");
     return combined.includes(normalizedSearch);
   });
 
-  const handleSendMessage = (vendor: Vendor) => {
+  const handleSendMessage = async (vendor: Vendor) => {
     if (!messageText.trim()) {
       alert("Please type a message before sending.");
       return;
     }
   
-    addMessage({
-      vendorId: vendor.id,
-      vendorName: vendor.name,
-      customerEmail: user?.email,
-      content: messageText.trim(),
-    });
+    try {
+      await addMessage({
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+        customerEmail: user?.email,
+        body: messageText.trim(),
+      });
   
-    setMessageText("");
-    alert("Your message has been sent (demo only).");
+      setMessageText("");
+      alert("Your message has been sent.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to send message");
+    }
   };
   
 
