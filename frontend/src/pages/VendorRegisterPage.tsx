@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./AuthPage.css";
@@ -7,15 +7,35 @@ import { useAuth } from "../auth/AuthContext";
 const VendorRegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { register, isLoading } = useAuth();
+
   const [businessName, setBusinessName] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
+  const VAT_ALLOWED = useMemo(() => /^[A-Za-z0-9 .\-_/]+$/, []);
+  const normalizeVat = (value: string) => value.trim().toUpperCase();
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const normalizedVat = normalizeVat(vatNumber);
+
+    if (!normalizedVat) {
+      setError("VAT / Tax number is required.");
+      return;
+    }
+    if (normalizedVat.length < 6) {
+      setError("VAT / Tax number looks too short (min 6 characters).");
+      return;
+    }
+    if (!VAT_ALLOWED.test(normalizedVat)) {
+      setError("VAT / Tax number contains invalid characters.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -30,8 +50,9 @@ const VendorRegisterPage: React.FC = () => {
         lastName: businessName.split(" ").slice(1).join(" ") || "",
         role: "vendor",
         businessName,
+
       });
-      // after successful registration go to vendor dashboard
+
       navigate("/vendor/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -65,6 +86,27 @@ const VendorRegisterPage: React.FC = () => {
               />
             </div>
 
+            {/* VAT field (added) */}
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="vendor-vat">
+                VAT / Tax Number
+              </label>
+              <input
+                id="vendor-vat"
+                type="text"
+                className="auth-input"
+                placeholder="e.g., NL123456789B01"
+                value={vatNumber}
+                onChange={(e) => setVatNumber(e.target.value)}
+                required
+                inputMode="text"
+                autoComplete="off"
+              />
+              <small className="auth-hint">
+                We use this for verification and invoicing (if applicable).
+              </small>
+            </div>
+
             <div className="auth-field">
               <label className="auth-label" htmlFor="vendor-email">
                 Email
@@ -96,10 +138,7 @@ const VendorRegisterPage: React.FC = () => {
             </div>
 
             <div className="auth-field">
-              <label
-                className="auth-label"
-                htmlFor="vendor-confirm-password"
-              >
+              <label className="auth-label" htmlFor="vendor-confirm-password">
                 Confirm Password
               </label>
               <input

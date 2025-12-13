@@ -15,8 +15,8 @@ export interface AuthUser {
   email: string;
   firstName?: string;
   lastName?: string;
-  name?: string; // optional, used by profile page
-  businessName?: string; // for vendors
+  name?: string; 
+  businessName?: string; 
 }
 
 export interface AuthContextType {
@@ -44,11 +44,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user is already logged in on mount
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (token) {
-      // Optionally fetch current user info from backend
       getCurrentUser();
     }
   }, []);
