@@ -3,3 +3,4 @@
 
 # local environment variables
 database/.env
+node_modules/
