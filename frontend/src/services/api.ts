@@ -178,3 +178,19 @@ export const favoritesAPI = {
     });
   },
 };
+
+// ==================== MESSAGES API ====================
+export const messagesAPI = {
+  send: (recipientId: number, content: string, listingId?: number, subject?: string) =>
+    apiCall('/messages', {
+      method: 'POST',
+      body: JSON.stringify({ recipientId, content, listingId, subject }),
+    }),
+
+  getInbox: () => apiCall('/messages/inbox'),
+  getSent: () => apiCall('/messages/sent'),
+  getConversation: (otherUserId: number) => apiCall(`/messages/conversation/${otherUserId}`),
+  markAsRead: (messageId: number) => apiCall(`/messages/${messageId}/read`, { method: 'POST' }),
+  delete: (messageId: number) => apiCall(`/messages/${messageId}`, { method: 'DELETE' }),
+  getUnreadCount: () => apiCall('/messages/unread-count'),
+};

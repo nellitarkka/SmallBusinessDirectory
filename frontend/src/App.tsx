@@ -14,8 +14,6 @@ import CustomerMessagesPage from "./pages/CustomerMessagesPage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
 import VendorInboxPage from "./pages/VendorInboxPage";
 
-
-
 function App() {
   return (
     <Routes>
@@ -41,9 +39,6 @@ function App() {
       <Route path="/customer/messages" element={<CustomerMessagesPage />} />
       <Route path="/customer/profile" element={<CustomerProfilePage />} />
       <Route path="/vendor/inbox" element={<VendorInboxPage />} />
-
-
-
     </Routes>
   );
 }
