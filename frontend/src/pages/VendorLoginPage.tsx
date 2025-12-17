@@ -17,7 +17,7 @@ const VendorLoginPage: React.FC = () => {
     setError("");
 
     try {
-      await login(email, password);
+      await login(email, password, "vendor");
       console.log("Vendor logged in:", email);
       navigate("/vendor/dashboard");
     } catch (err) {

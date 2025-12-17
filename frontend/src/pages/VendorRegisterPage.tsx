@@ -10,6 +10,8 @@ const VendorRegisterPage: React.FC = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [city, setCity] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +32,9 @@ const VendorRegisterPage: React.FC = () => {
         password,
         firstName,
         lastName,
+        businessName,
+        city,
+        vatNumber,
         role: "vendor",
       });
       // after successful registration go to vendor dashboard
@@ -93,6 +98,34 @@ const VendorRegisterPage: React.FC = () => {
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="vendor-city">
+                City
+              </label>
+              <input
+                id="vendor-city"
+                type="text"
+                className="auth-input"
+                placeholder="City of operation"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="vendor-vat-number">
+                VAT Number
+              </label>
+              <input
+                id="vendor-vat-number"
+                type="text"
+                className="auth-input"
+                placeholder="VAT / Tax ID"
+                value={vatNumber}
+                onChange={(e) => setVatNumber(e.target.value)}
               />
             </div>
 

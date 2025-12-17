@@ -37,10 +37,19 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
 
 // ==================== AUTH API ====================
 export const authAPI = {
-  register: async (email: string, password: string, firstName: string, lastName: string, role: string) => {
+  register: async (payload: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    businessName?: string;
+    city?: string;
+    vatNumber?: string;
+  }) => {
     const data = await apiCall('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, firstName, lastName, role }),
+      body: JSON.stringify(payload),
     });
     
     // Save token to localStorage
@@ -52,10 +61,10 @@ export const authAPI = {
     return data;
   },
 
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string, role?: string) => {
     const data = await apiCall('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, role }),
     });
     
     // Save token to localStorage

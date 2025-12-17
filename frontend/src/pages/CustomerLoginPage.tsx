@@ -17,7 +17,7 @@ const CustomerLoginPage: React.FC = () => {
     setError("");
 
     try {
-      await login(email, password);
+      await login(email, password, "customer");
       console.log("Customer logged in:", email);
       navigate("/customer/dashboard");
     } catch (err) {

@@ -62,7 +62,7 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role: expectedRole } = req.body;
     
     const user = await User.findByEmail(email);
     if (!user) {
@@ -80,6 +80,13 @@ exports.login = async (req, res) => {
       });
     }
     
+    if (expectedRole && user.role !== expectedRole) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Role mismatch. Please use the correct portal to sign in.'
+      });
+    }
+
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_SECRET,

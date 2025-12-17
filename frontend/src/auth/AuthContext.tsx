@@ -9,6 +9,17 @@ import { authAPI } from "../services/api";
 
 type Role = "customer" | "vendor" | "admin";
 
+type RegisterPayload = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+  businessName?: string;
+  city?: string;
+  vatNumber?: string;
+};
+
 export interface AuthUser {
   id: number;
   role: Role;
@@ -19,8 +30,8 @@ export interface AuthUser {
 export interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; password: string; firstName: string; lastName: string; role: Role }) => Promise<void>;
+  login: (email: string, password: string, role?: Role) => Promise<void>;
+  register: (data: RegisterPayload) => Promise<void>;
   logout: () => void;
   updateProfile: (updates: Partial<AuthUser>) => void;
 }
@@ -42,8 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const response = await authAPI.login(email, password);
+  const login = async (email: string, password: string, role?: Role) => {
+    const response = await authAPI.login(email, password, role);
     if (response.status === 'success') {
       setUser(response.data.user);
     } else {
@@ -51,8 +62,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async ({ email, password, firstName, lastName, role }: { email: string; password: string; firstName: string; lastName: string; role: Role }) => {
-    const response = await authAPI.register(email, password, firstName, lastName, role);
+  const register = async (payload: RegisterPayload) => {
+    const response = await authAPI.register(payload);
     if (response.status === 'success') {
       setUser(response.data.user);
     } else {

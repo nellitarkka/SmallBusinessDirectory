@@ -17,7 +17,7 @@ const AdminLoginPage: React.FC = () => {
     setError("");
 
     try {
-      await login(email, password);
+      await login(email, password, "admin");
       console.log("Admin logged in:", email);
       navigate("/admin/dashboard");
     } catch (err) {
