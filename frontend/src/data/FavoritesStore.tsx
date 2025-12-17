@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { favoritesAPI } from "../services/api";
+import { useAuth } from "../auth/AuthContext";
 
 type VendorId = number;
 
@@ -23,6 +24,7 @@ const FavoritesContext = createContext<FavoritesStore | undefined>(undefined);
 export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   const [favoriteVendorIds, setFavoriteVendorIds] = useState<VendorId[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   const fetchFavorites = async () => {
     setIsLoading(true);
@@ -57,13 +59,15 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
 
   const clearFavorites = () => setFavoriteVendorIds([]);
 
-  // Fetch favorites on mount (only if user is logged in)
+  // Keep favorites in sync with auth state
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (user && token) {
       fetchFavorites();
+    } else {
+      setFavoriteVendorIds([]);
     }
-  }, []);
+  }, [user]);
 
   return (
     <FavoritesContext.Provider
