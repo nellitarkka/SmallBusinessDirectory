@@ -23,23 +23,19 @@ export const PublicListingsProvider = ({ children }: { children: ReactNode }) =>
       const response = await listingsAPI.getAll(filters);
       
       if (response.status === 'success') {
-        // Transform backend listings to Vendor format
+        // Align with public_listings_view fields from the backend
         const transformedListings = response.data.listings.map((listing: any) => ({
-          id: listing.id,
-          name: listing.business_name,
-          category: listing.category_name,
-          location: listing.city,
+          id: listing.listing_id ?? listing.id, // listing_id is what the view returns
+          name: listing.business_name ?? listing.title ?? listing.name,
+          category: listing.categories?.[0] ?? listing.category ?? listing.category_name,
+          location: listing.city ?? listing.vendor_city,
           description: listing.description,
-          email: listing.email,
-          phone: listing.phone,
-          address: listing.address,
-          state: listing.state,
-          zip_code: listing.zip_code,
-          website: listing.website,
-          category_id: listing.category_id,
-          status: "approved", // Default status
+          email: listing.contact_email ?? listing.vendor_email,
+          phone: listing.contact_phone,
+          openingHours: listing.opening_hours,
+          status: "approved", // Frontend expects a status field
         } as Vendor));
-        
+
         setListings(transformedListings);
       }
     } catch (err) {
