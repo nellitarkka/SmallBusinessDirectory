@@ -2,7 +2,7 @@
 import { type FormEvent, useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import "./VendorDashboardPage.css";
-import { listingsAPI, vendorAPI } from "../services/api";
+import { listingsAPI, vendorAPI, API_ORIGIN } from "../services/api";
 import { useAuth } from "../auth/AuthContext";
 
 interface Listing {
@@ -15,6 +15,7 @@ interface Listing {
   contact_phone?: string;
   status: string;
   opening_hours?: string;
+  image_url?: string;
 }
 
 interface VendorProfile {
@@ -44,6 +45,8 @@ const VendorDashboardPage: React.FC = () => {
   const [contactEmail, setContactEmail] = useState(user?.email || "");
   const [contactPhone, setContactPhone] = useState("");
   const [openingHours, setOpeningHours] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageStatus, setImageStatus] = useState<string>("");
 
   // Fetch vendor profile and listings on mount
   useEffect(() => {
@@ -174,6 +177,27 @@ const VendorDashboardPage: React.FC = () => {
       setStatusMessage("");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedListingId || !imageFile) {
+      setImageStatus("No image selected");
+      return;
+    }
+    setImageStatus("Uploading...");
+    try {
+      const res = await listingsAPI.uploadImage(selectedListingId, imageFile);
+      if (res.status === 'success') {
+        setImageStatus("Image updated");
+        await fetchMyListings();
+      } else {
+        setImageStatus(res.message || "Failed to upload");
+      }
+    } catch (e: any) {
+      setImageStatus(e?.message || "Failed to upload");
+    } finally {
+      setTimeout(() => setImageStatus(""), 2000);
     }
   };
 
@@ -598,6 +622,33 @@ const VendorDashboardPage: React.FC = () => {
               <h3 className="vendor-preview-title">
                 {title || "Your Business"}
               </h3>
+
+              {selectedListingId && (
+                <div style={{ margin: '0.5rem 0' }}>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    {(() => {
+                      const u = listings.find(l => l.id === selectedListingId)?.image_url || '';
+                      const src = u ? (String(u).startsWith('/') ? `${API_ORIGIN}${u}` : u) : '';
+                      return (
+                        <img
+                          src={src}
+                          alt="Listing"
+                          style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 6, display: (u ? 'block' : 'none') }}
+                        />
+                      );
+                    })()}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                  />
+                  <button type="button" className="vendor-save-button" style={{ marginLeft: '0.5rem' }} onClick={handleImageUpload}>
+                    Upload Image
+                  </button>
+                  {imageStatus && <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>{imageStatus}</span>}
+                </div>
+              )}
 
               {city && (
                 <p className="vendor-preview-location">{city}</p>

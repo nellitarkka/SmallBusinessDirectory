@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useFavorites } from "../data/FavoritesStore";
 import { usePublicListings } from "../data/PublicListingsStore";
-import { listingsAPI } from "../services/api";
+import { listingsAPI, API_ORIGIN } from "../services/api";
 import type { Vendor } from "../data/vendors";
 import { useMessages } from "../data/MessagesStore";
 import { useAuth } from "../auth/AuthContext";
@@ -46,6 +46,8 @@ const VendorDetailPage: React.FC = () => {
         if (res.status === "success") {
           const listing = res.data.listing;
           // Align with public_listings_view mapping
+          const img = listing.image_url || listing.imageUrl;
+          const imageUrl = img ? (String(img).startsWith('/') ? `${API_ORIGIN}${img}` : img) : undefined;
           const mapped: Vendor = {
             id: listing.listing_id ?? listing.id,
             name: listing.business_name ?? listing.title ?? listing.name,
@@ -55,6 +57,7 @@ const VendorDetailPage: React.FC = () => {
             email: listing.contact_email ?? listing.vendor_email,
             phone: listing.contact_phone,
             openingHours: listing.opening_hours,
+            imageUrl,
             vendorUserId: listing.vendor_user_id,
             status: "approved",
           };
@@ -195,6 +198,22 @@ const VendorDetailPage: React.FC = () => {
         </button>
 
         <section className="vendor-detail-card">
+          {vendor.imageUrl && (
+            <div style={{ width: '100%', marginBottom: '1rem' }}>
+              <img 
+                src={vendor.imageUrl} 
+                alt={vendor.name} 
+                style={{ 
+                  width: '100%', 
+                  height: 'auto',
+                  maxHeight: '400px', 
+                  objectFit: 'cover', 
+                  borderRadius: '8px',
+                  display: 'block'
+                }} 
+              />
+            </div>
+          )}
           <header className="vendor-detail-header">
             <div>
               <h1>{vendor.name}</h1>

@@ -1,13 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors());
 app.use(express.json());
+// Serve uploaded images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Import routes
 const authRoutes = require('./routes/auth');

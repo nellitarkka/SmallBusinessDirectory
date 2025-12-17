@@ -87,7 +87,7 @@ const Listing = {
   // Update a listing
   async update(id, data) {
     try {
-      const allowedFields = ['title', 'description', 'city', 'contact_email', 'contact_phone', 'opening_hours', 'status'];
+      const allowedFields = ['title', 'description', 'city', 'contact_email', 'contact_phone', 'opening_hours', 'status', 'image_url'];
       const updates = [];
       const values = [];
       let paramCount = 1;

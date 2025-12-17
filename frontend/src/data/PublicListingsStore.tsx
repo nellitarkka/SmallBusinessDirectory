@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { listingsAPI } from "../services/api";
+import { listingsAPI, API_ORIGIN } from "../services/api";
 import type { Vendor } from "./VendorStore";
 
 interface PublicListingsContextType {
@@ -24,7 +24,10 @@ export const PublicListingsProvider = ({ children }: { children: ReactNode }) =>
       
       if (response.status === 'success') {
         // Align with public_listings_view fields from the backend
-        const transformedListings = response.data.listings.map((listing: any) => ({
+        const transformedListings = response.data.listings.map((listing: any) => {
+          const img = listing.image_url || listing.imageUrl;
+          const imageUrl = img ? (String(img).startsWith('/') ? `${API_ORIGIN}${img}` : img) : undefined;
+          return ({
           id: listing.listing_id ?? listing.id, // listing_id is what the view returns
           name: listing.business_name ?? listing.title ?? listing.name,
           category: listing.categories?.[0] ?? listing.category ?? listing.category_name,
@@ -33,9 +36,11 @@ export const PublicListingsProvider = ({ children }: { children: ReactNode }) =>
           email: listing.contact_email ?? listing.vendor_email,
           phone: listing.contact_phone,
           openingHours: listing.opening_hours,
+          imageUrl,
           vendorUserId: listing.vendor_user_id,
           status: "approved", // Frontend expects a status field
-        } as Vendor));
+          } as Vendor);
+        });
 
         setListings(transformedListings);
       }

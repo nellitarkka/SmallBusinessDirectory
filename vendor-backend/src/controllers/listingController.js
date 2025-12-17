@@ -1,5 +1,6 @@
 const Listing = require('../models/listing');
 const Vendor = require('../models/vendor');
+const path = require('path');
 
 // Create a new listing (vendor only)
 exports.create = async (req, res) => {
@@ -268,3 +269,32 @@ exports.delete = async (req, res) => {
 };
 
 module.exports = exports;
+
+// Upload listing image (single) - vendor only, owns listing
+exports.uploadImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const listing = await Listing.findByIdWithVendor(id);
+    if (!listing) {
+      return res.status(404).json({ status: 'error', message: 'Listing not found' });
+    }
+    if (listing.vendor_user_id !== userId) {
+      return res.status(403).json({ status: 'error', message: 'Not allowed to modify this listing' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No file uploaded' });
+    }
+
+    // Build public URL for the uploaded file
+    const url = `/uploads/${req.file.filename}`;
+    const updated = await Listing.update(id, { image_url: url });
+
+    res.status(200).json({ status: 'success', data: { listing: updated } });
+  } catch (err) {
+    console.error('Upload image error:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+};

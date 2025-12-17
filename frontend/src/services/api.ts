@@ -1,4 +1,5 @@
 const API_BASE_URL = 'http://localhost:3000/api';
+export const API_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
 
 // Helper to get token from localStorage
 const getToken = () => localStorage.getItem('token');
@@ -7,13 +8,11 @@ const getToken = () => localStorage.getItem('token');
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const token = getToken();
   
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
 
   // Add any custom headers from options
   if (options.headers) {
-    Object.assign(headers, options.headers);
+    Object.assign(headers, options.headers as Record<string, string>);
   }
 
   // Add authorization token if available
@@ -21,9 +20,12 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const isFormData = options.body instanceof FormData;
+  const finalHeaders = isFormData ? headers : { 'Content-Type': 'application/json', ...headers };
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers,
+    headers: finalHeaders,
   });
 
   const data = await response.json();
@@ -157,6 +159,16 @@ export const listingsAPI = {
     return await apiCall(`/listings/admin/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    });
+  },
+
+  // Upload single image for a listing (vendors only)
+  uploadImage: async (id: number | string, file: File) => {
+    const form = new FormData();
+    form.append('image', file);
+    return await apiCall(`/listings/${id}/image`, {
+      method: 'PATCH',
+      body: form,
     });
   },
 };
