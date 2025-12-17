@@ -60,6 +60,7 @@ export const VendorProvider = ({ children }: { children: ReactNode }) => {
     zip_code: listing.zip_code,
     website: listing.website,
     category_id: listing.category_id,
+    vendorUserId: listing.vendor_user_id,
     status: "approved", // Default status since backend doesn't have this yet
   });
 

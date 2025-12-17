@@ -33,6 +33,7 @@ export const PublicListingsProvider = ({ children }: { children: ReactNode }) =>
           email: listing.contact_email ?? listing.vendor_email,
           phone: listing.contact_phone,
           openingHours: listing.opening_hours,
+          vendorUserId: listing.vendor_user_id,
           status: "approved", // Frontend expects a status field
         } as Vendor));
 

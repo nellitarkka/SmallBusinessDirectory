@@ -3,8 +3,9 @@ const Message = require('../models/message');
 // Send a new message
 exports.sendMessage = async (req, res) => {
   try {
-    const senderId = req.user.id;
-    const { recipient_id, listing_id, subject, content } = req.body;
+    const senderId = req.user.userId;
+    // Frontend payload: { recipient_id, content, listing_id, subject }
+    const { recipient_id, content, listing_id, subject } = req.body;
 
     if (!recipient_id || !content) {
       return res.status(400).json({
@@ -15,8 +16,8 @@ exports.sendMessage = async (req, res) => {
 
     const message = await Message.create(
       senderId,
-      recipient_id,
-      listing_id || null,
+      Number(recipient_id),
+      listing_id ? Number(listing_id) : null,
       subject || '',
       content
     );
@@ -37,7 +38,7 @@ exports.sendMessage = async (req, res) => {
 // Get inbox (received messages)
 exports.getInbox = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const messages = await Message.getInbox(userId);
 
     res.json({
@@ -56,7 +57,7 @@ exports.getInbox = async (req, res) => {
 // Get sent messages
 exports.getSent = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const messages = await Message.getSent(userId);
 
     res.json({
@@ -75,7 +76,7 @@ exports.getSent = async (req, res) => {
 // Get conversation with another user
 exports.getConversation = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { otherUserId } = req.params;
 
     const messages = await Message.getConversation(userId, parseInt(otherUserId));
@@ -97,7 +98,7 @@ exports.getConversation = async (req, res) => {
 exports.getMessage = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const message = await Message.findById(id);
 
@@ -133,7 +134,7 @@ exports.getMessage = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const message = await Message.findById(id);
 
@@ -171,7 +172,7 @@ exports.markAsRead = async (req, res) => {
 exports.deleteMessage = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     const message = await Message.findById(id);
 
@@ -208,7 +209,7 @@ exports.deleteMessage = async (req, res) => {
 // Get unread count
 exports.getUnreadCount = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const count = await Message.getUnreadCount(userId);
 
     res.json({

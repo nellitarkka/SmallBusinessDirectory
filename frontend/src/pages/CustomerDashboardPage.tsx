@@ -18,7 +18,7 @@ const CustomerDashboardPage: React.FC = () => {
 
   const { listings: vendors } = usePublicListings();
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { addMessage } = useMessages();
+  const { sendMessage } = useMessages();
   const { user } = useAuth();
 
   const [messageText, setMessageText] = useState("");
@@ -51,12 +51,16 @@ const CustomerDashboardPage: React.FC = () => {
     }
   
     try {
-      await addMessage({
-        vendorId: vendor.id,
-        vendorName: vendor.name,
-        customerEmail: user?.email,
-        body: messageText.trim(),
-      });
+      if (!vendor.vendorUserId) {
+        alert("This vendor cannot receive messages yet.");
+        return;
+      }
+      await sendMessage(
+        Number(vendor.vendorUserId),
+        messageText.trim(),
+        Number(vendor.id),
+        undefined
+      );
   
       setMessageText("");
       alert("Your message has been sent.");

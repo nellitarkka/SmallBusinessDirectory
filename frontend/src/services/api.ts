@@ -212,13 +212,13 @@ export const messagesAPI = {
   send: (recipientId: number, content: string, listingId?: number, subject?: string) =>
     apiCall('/messages', {
       method: 'POST',
-      body: JSON.stringify({ recipientId, content, listingId, subject }),
+      body: JSON.stringify({ recipient_id: recipientId, content, listing_id: listingId, subject }),
     }),
 
   getInbox: () => apiCall('/messages/inbox'),
   getSent: () => apiCall('/messages/sent'),
   getConversation: (otherUserId: number) => apiCall(`/messages/conversation/${otherUserId}`),
-  markAsRead: (messageId: number) => apiCall(`/messages/${messageId}/read`, { method: 'POST' }),
+    markAsRead: (messageId: number) => apiCall(`/messages/${messageId}/read`, { method: 'PUT' }),
   delete: (messageId: number) => apiCall(`/messages/${messageId}`, { method: 'DELETE' }),
   getUnreadCount: () => apiCall('/messages/unread-count'),
 };

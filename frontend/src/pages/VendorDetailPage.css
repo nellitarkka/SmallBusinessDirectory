@@ -129,6 +129,37 @@
     background: #111827;
     color: #ffffff;
   }
+
+  .vendor-detail-message-box {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+
+  .vendor-detail-input,
+  .vendor-detail-textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    background: #fff;
+  }
+
+  .vendor-detail-textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .vendor-detail-status {
+    font-size: 0.9rem;
+    color: #374151;
+  }
   
   .vendor-detail-error {
     font-size: 0.95rem;

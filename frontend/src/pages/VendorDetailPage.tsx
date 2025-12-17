@@ -5,6 +5,8 @@ import { useFavorites } from "../data/FavoritesStore";
 import { usePublicListings } from "../data/PublicListingsStore";
 import { listingsAPI } from "../services/api";
 import type { Vendor } from "../data/vendors";
+import { useMessages } from "../data/MessagesStore";
+import { useAuth } from "../auth/AuthContext";
 import "./VendorDetailPage.css";
 
 const VendorDetailPage: React.FC = () => {
@@ -12,10 +14,15 @@ const VendorDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { listings } = usePublicListings();
+  const { sendMessage, isLoading: isMessaging } = useMessages();
+  const { user } = useAuth();
 
   const [loadedVendor, setLoadedVendor] = useState<Vendor | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageBody, setMessageBody] = useState("");
+  const [messageStatus, setMessageStatus] = useState<string | null>(null);
 
   // Try to find the vendor from already-loaded public listings
   const vendorFromCache = useMemo(() => {
@@ -48,6 +55,7 @@ const VendorDetailPage: React.FC = () => {
             email: listing.contact_email ?? listing.vendor_email,
             phone: listing.contact_phone,
             openingHours: listing.opening_hours,
+            vendorUserId: listing.vendor_user_id,
             status: "approved",
           };
           if (!ignore) setLoadedVendor(mapped);
@@ -144,6 +152,36 @@ const VendorDetailPage: React.FC = () => {
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!user) {
+      setMessageStatus("Please log in to send a message.");
+      return;
+    }
+    if (!vendor.vendorUserId) {
+      setMessageStatus("This vendor cannot receive messages yet.");
+      return;
+    }
+    if (!messageBody.trim()) {
+      setMessageStatus("Please enter a message.");
+      return;
+    }
+
+    try {
+      setMessageStatus("Sending…");
+      await sendMessage(
+        Number(vendor.vendorUserId),
+        messageBody.trim(),
+        Number(vendor.id),
+        messageSubject.trim() || undefined
+      );
+      setMessageBody("");
+      setMessageSubject("");
+      setMessageStatus("Message sent.");
+    } catch (err: any) {
+      setMessageStatus(err?.message || "Failed to send message.");
+    }
+  };
+
   return (
     <div className="vendor-detail-root">
       <Navbar />
@@ -205,7 +243,6 @@ const VendorDetailPage: React.FC = () => {
             <p className="vendor-detail-description">{vendor.description}</p>
           )}
 
-          {/* Placeholder for hours / photos if you add them later */}
           <div className="vendor-detail-extra">
             <h2>Contact</h2>
             <p>
@@ -232,6 +269,34 @@ const VendorDetailPage: React.FC = () => {
               >
                 Share
               </button>
+            </div>
+
+            <div className="vendor-detail-message-box">
+              <h3>Send a message</h3>
+              <input
+                type="text"
+                className="vendor-detail-input"
+                placeholder="Subject (optional)"
+                value={messageSubject}
+                onChange={(e) => setMessageSubject(e.target.value)}
+              />
+              <textarea
+                className="vendor-detail-textarea"
+                placeholder="Write your message to the vendor"
+                rows={4}
+                value={messageBody}
+                onChange={(e) => setMessageBody(e.target.value)}
+              />
+              <button
+                className="vendor-detail-btn vendor-detail-btn--primary"
+                onClick={handleSendMessage}
+                disabled={isMessaging}
+              >
+                {isMessaging ? "Sending…" : "Send Message"}
+              </button>
+              {messageStatus && (
+                <p className="vendor-detail-status">{messageStatus}</p>
+              )}
             </div>
           </div>
         </section>
