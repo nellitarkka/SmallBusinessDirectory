@@ -1,28 +1,101 @@
 import Navbar from "../components/Navbar";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useVendors } from "../data/VendorStore";
 import { useFavorites } from "../data/FavoritesStore";
+import { usePublicListings } from "../data/PublicListingsStore";
+import { listingsAPI } from "../services/api";
 import type { Vendor } from "../data/vendors";
 import "./VendorDetailPage.css";
 
 const VendorDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { vendors } = useVendors();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { listings } = usePublicListings();
 
-  // find vendor by id (string-compare so it works for number or string ids)
-  const vendor = vendors.find((v) => String(v.id) === String(id)) as
-    | Vendor
-    | undefined;
+  const [loadedVendor, setLoadedVendor] = useState<Vendor | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  if (!vendor || vendor.status !== "approved") {
+  // Try to find the vendor from already-loaded public listings
+  const vendorFromCache = useMemo(() => {
+    if (!id) return undefined;
+    return listings.find((v) => String(v.id) === String(id));
+  }, [listings, id]);
+
+  // If not found in cache, fetch from backend directly
+  useEffect(() => {
+    let ignore = false;
+    const fetchOne = async () => {
+      if (vendorFromCache) {
+        setLoadedVendor(vendorFromCache);
+        return;
+      }
+      if (!id) return;
+      setIsLoading(true);
+      setLoadError(null);
+      try {
+        const res = await listingsAPI.getById(id);
+        if (res.status === "success") {
+          const listing = res.data.listing;
+          // Align with public_listings_view mapping
+          const mapped: Vendor = {
+            id: listing.listing_id ?? listing.id,
+            name: listing.business_name ?? listing.title ?? listing.name,
+            category: listing.categories?.[0] ?? listing.category ?? listing.category_name,
+            location: listing.city ?? listing.vendor_city,
+            description: listing.description,
+            email: listing.contact_email ?? listing.vendor_email,
+            phone: listing.contact_phone,
+            openingHours: listing.opening_hours,
+            status: "approved",
+          };
+          if (!ignore) setLoadedVendor(mapped);
+        } else if (!ignore) {
+          setLoadError("Failed to load vendor");
+        }
+      } catch (e: any) {
+        if (!ignore) setLoadError(e?.message || "Failed to load vendor");
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    };
+    fetchOne();
+    return () => {
+      ignore = true;
+    };
+  }, [id, vendorFromCache]);
+
+  const vendor = loadedVendor ?? vendorFromCache ?? undefined;
+
+  const formattedLocation = useMemo(() => {
+    if (!vendor?.location) return "";
+    const parts = vendor.location
+      .split(/[,|]/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const uniqueParts = Array.from(new Set(parts));
+    return uniqueParts.join(" • ");
+  }, [vendor?.location]);
+
+  if (isLoading) {
+    return (
+      <div className="vendor-detail-root">
+        <Navbar />
+        <main className="vendor-detail-main">
+          <p className="vendor-detail-error">Loading vendor…</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (!vendor) {
     return (
       <div className="vendor-detail-root">
         <Navbar />
         <main className="vendor-detail-main">
           <p className="vendor-detail-error">
-            This vendor could not be found or is not available.
+            {loadError || "This vendor could not be found or is not available."}
           </p>
           <button
             className="vendor-detail-back-btn"
@@ -91,17 +164,27 @@ const VendorDetailPage: React.FC = () => {
                 {vendor.category && (
                   <span className="vendor-detail-tag">{vendor.category}</span>
                 )}
-                {vendor.location && (
-                  <span className="vendor-detail-tag">{vendor.location}</span>
+                {formattedLocation && (
+                  <span className="vendor-detail-tag vendor-detail-tag--location">
+                    <svg
+                      aria-hidden="true"
+                      focusable="false"
+                      viewBox="0 0 24 24"
+                      className="vendor-detail-icon"
+                    >
+                      <path
+                        d="M12 2.75a6.25 6.25 0 0 0-6.25 6.25c0 4.01 3.58 7.54 5.73 9.38a2 2 0 0 0 2.54 0c2.15-1.84 5.73-5.37 5.73-9.38A6.25 6.25 0 0 0 12 2.75Zm0 8.5a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {formattedLocation}
+                  </span>
                 )}
                 {vendor.openingHours && (
-                  <p className="vendor-detail-hours">{vendor.openingHours}</p>
+                  <span className="vendor-detail-tag vendor-detail-tag--muted">
+                    {vendor.openingHours}
+                  </span>
                 )}
-                {vendor.openingHours && (
-                  <p className="vendor-detail-hours">{vendor.openingHours}</p>
-                )}
-
-
               </div>
             </div>
 
