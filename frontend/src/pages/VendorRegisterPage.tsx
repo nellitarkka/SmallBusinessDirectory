@@ -7,6 +7,8 @@ import { useAuth } from "../auth/AuthContext";
 const VendorRegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { register, isLoading } = useAuth();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,10 +28,9 @@ const VendorRegisterPage: React.FC = () => {
       await register({
         email,
         password,
-        firstName: businessName.split(" ")[0] || businessName,
-        lastName: businessName.split(" ").slice(1).join(" ") || "",
+        firstName,
+        lastName,
         role: "vendor",
-        businessName,
       });
       // after successful registration go to vendor dashboard
       navigate("/vendor/dashboard");
@@ -50,6 +51,36 @@ const VendorRegisterPage: React.FC = () => {
           </p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="vendor-first-name">
+                First Name
+              </label>
+              <input
+                id="vendor-first-name"
+                type="text"
+                className="auth-input"
+                placeholder="Your first name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="vendor-last-name">
+                Last Name
+              </label>
+              <input
+                id="vendor-last-name"
+                type="text"
+                className="auth-input"
+                placeholder="Your last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+            </div>
+
             <div className="auth-field">
               <label className="auth-label" htmlFor="vendor-business-name">
                 Business Name

@@ -7,7 +7,8 @@ import { useAuth } from "../auth/AuthContext";
 const CustomerRegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { register, isLoading } = useAuth();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,8 +27,8 @@ const CustomerRegisterPage: React.FC = () => {
       await register({
         email,
         password,
-        firstName: name.split(" ")[0] || name,
-        lastName: name.split(" ").slice(1).join(" ") || "",
+        firstName,
+        lastName,
         role: "customer",
       });
       // after successful registration go to customer dashboard
@@ -50,16 +51,31 @@ const CustomerRegisterPage: React.FC = () => {
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="auth-field">
-              <label className="auth-label" htmlFor="customer-name">
-                Name
+              <label className="auth-label" htmlFor="customer-first-name">
+                First Name
               </label>
               <input
-                id="customer-name"
+                id="customer-first-name"
                 type="text"
                 className="auth-input"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Your first name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="customer-last-name">
+                Last Name
+              </label>
+              <input
+                id="customer-last-name"
+                type="text"
+                className="auth-input"
+                placeholder="Your last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 required
               />
             </div>

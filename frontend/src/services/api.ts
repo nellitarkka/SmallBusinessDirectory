@@ -37,10 +37,10 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
 
 // ==================== AUTH API ====================
 export const authAPI = {
-  register: async (email: string, password: string, name: string, role: string) => {
+  register: async (email: string, password: string, firstName: string, lastName: string, role: string) => {
     const data = await apiCall('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, name, role }),
+      body: JSON.stringify({ email, password, firstName, lastName, role }),
     });
     
     // Save token to localStorage
