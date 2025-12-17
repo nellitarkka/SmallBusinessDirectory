@@ -65,6 +65,63 @@ exports.getAll = async (req, res) => {
   }
 };
 
+// Get all listings (admin - all statuses)
+exports.getAllAdmin = async (req, res) => {
+  try {
+    const listings = await Listing.findAllAdmin();
+    res.json({
+      status: 'success',
+      results: listings.length,
+      data: { listings }
+    });
+  } catch (error) {
+    console.error('Get all admin listings error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Update listing status (admin only)
+exports.updateStatusAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Validate status - admin can set to active or rejected
+    const validStatuses = ['active', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid status. Admin can set to: ${validStatuses.join(', ')}`
+      });
+    }
+    
+    // Update status
+    const updatedListing = await Listing.update(id, { status });
+    
+    if (!updatedListing) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Listing not found'
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      message: `Listing status updated to ${status}`,
+      data: { listing: updatedListing }
+    });
+  } catch (error) {
+    console.error('Update listing status (admin) error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
 // Get one listing by ID (public)
 exports.getOne = async (req, res) => {
   try {

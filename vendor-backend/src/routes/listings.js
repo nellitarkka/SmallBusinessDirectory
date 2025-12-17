@@ -13,4 +13,8 @@ router.get('/vendor/my-listings', authenticate, requireRole('vendor'), listingCo
 router.patch('/:id', authenticate, requireRole('vendor'), listingController.update);
 router.delete('/:id', authenticate, requireRole('vendor'), listingController.delete);
 
+// Admin routes
+router.get('/admin/all', authenticate, requireRole('admin'), listingController.getAllAdmin);
+router.patch('/admin/:id/status', authenticate, requireRole('admin'), listingController.updateStatusAdmin);
+
 module.exports = router;

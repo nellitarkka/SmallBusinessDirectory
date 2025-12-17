@@ -74,7 +74,11 @@ const Listing = {
     try {
       const query = 'SELECT * FROM vendor_listings_view WHERE vendor_user_id = $1 ORDER BY created_at DESC';
       const result = await pool.query(query, [userId]);
-      return result.rows;
+      // Map listing_id to id for consistency with frontend
+      return result.rows.map(row => ({
+        ...row,
+        id: row.listing_id
+      }));
     } catch (error) {
       throw error;
     }
@@ -168,6 +172,21 @@ const Listing = {
     try {
       const query = 'DELETE FROM listing_categories WHERE listing_id = $1';
       await pool.query(query, [listingId]);
+    } catch (error) {
+      throw error;
+    }
+  }
+,
+  // Admin: get all listings with status and vendor info
+  async findAllAdmin() {
+    try {
+      const query = 'SELECT * FROM vendor_listings_view ORDER BY created_at DESC';
+      const result = await pool.query(query);
+      // Map listing_id to id for consistency with frontend
+      return result.rows.map(row => ({
+        ...row,
+        id: row.listing_id
+      }));
     } catch (error) {
       throw error;
     }

@@ -106,16 +106,13 @@ export const listingsAPI = {
 
   // Create new listing (vendors only)
   create: async (listingData: {
-    business_name: string;
+    title: string;
     description: string;
-    address: string;
     city: string;
-    state: string;
-    zip_code: string;
-    phone: string;
-    email: string;
-    website?: string;
-    category_id: number;
+    contactPhone?: string;
+    contactEmail?: string;
+    openingHours?: string;
+    categoryIds?: number[];
   }) => {
     return await apiCall('/listings', {
       method: 'POST',
@@ -125,19 +122,15 @@ export const listingsAPI = {
 
   // Update listing (vendors only, must own the listing)
   update: async (id: number | string, updates: Partial<{
-    business_name: string;
+    title: string;
     description: string;
-    address: string;
     city: string;
-    state: string;
-    zip_code: string;
-    phone: string;
-    email: string;
-    website: string;
-    category_id: number;
+    contactPhone: string;
+    contactEmail: string;
+    openingHours: string;
   }>) => {
     return await apiCall(`/listings/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(updates),
     });
   },
@@ -147,6 +140,32 @@ export const listingsAPI = {
     return await apiCall(`/listings/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  // Get vendor's own listings
+  getMine: async () => {
+    return await apiCall('/listings/vendor/my-listings');
+  },
+
+  // Get all listings for admin moderation (all statuses)
+  getAllAdmin: async () => {
+    return await apiCall('/listings/admin/all');
+  },
+
+  // Update listing status (admin only)
+  updateStatusAdmin: async (id: number | string, status: 'active' | 'rejected') => {
+    return await apiCall(`/listings/admin/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  },
+};
+
+// ==================== VENDOR API ====================
+export const vendorAPI = {
+  // Get vendor profile
+  getProfile: async () => {
+    return await apiCall('/vendor/profile');
   },
 };
 
