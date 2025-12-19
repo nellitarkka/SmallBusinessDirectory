@@ -28,13 +28,38 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
     headers: finalHeaders,
   });
 
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+  // Gracefully handle 204 No Content or non-JSON responses
+  const contentType = response.headers.get('content-type') || '';
+  let data: any = null;
+
+  if (response.status !== 204) {
+    // Try parsing JSON if content-type indicates JSON, otherwise try text
+    if (contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+    } else {
+      // Attempt to read text; ignore if empty
+      const text = await response.text();
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
+      }
+    }
   }
 
-  return data;
+  if (!response.ok) {
+    const message = (data && (data.message || data.error)) || response.statusText || 'API request failed';
+    throw new Error(message);
+  }
+
+  // For empty bodies, return a conventional success shape
+  return data ?? { status: 'success' };
 }
 
 // ==================== AUTH API ====================
