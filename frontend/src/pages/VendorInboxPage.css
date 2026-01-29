@@ -1,0 +1,71 @@
+.vendor-inbox-root {
+    min-height: 100vh;
+    background: #f3f4f6;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .vendor-inbox-main {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+  }
+  
+  .vendor-inbox-main h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .vendor-inbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  .vendor-inbox-item {
+    background: #ffffff;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+  }
+  
+  .vendor-inbox-content {
+    margin-top: 0.4rem;
+    color: #4b5563;
+  }
+  
+  .vendor-inbox-replies {
+    margin-top: 1rem;
+    padding-left: 1rem;
+    border-left: 3px solid #e5e7eb;
+  }
+  
+  .vendor-inbox-reply {
+    margin-top: 0.3rem;
+    color: #1f2937;
+  }
+  
+  .vendor-inbox-textarea {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.6rem;
+    border-radius: 0.75rem;
+    border: 1px solid #d1d5db;
+    font-size: 0.9rem;
+  }
+  
+  .vendor-inbox-btn {
+    margin-top: 0.75rem;
+    padding: 0.45rem 1rem;
+    border: none;
+    border-radius: 999px;
+    background: #111827;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .vendor-inbox-btn:hover {
+    background: #1f2937;
+  }
+  

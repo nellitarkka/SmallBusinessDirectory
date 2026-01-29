@@ -1,0 +1,270 @@
+.customer-page-root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f3f4f6;
+  }
+  
+  .customer-main {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
+  
+  .customer-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  
+  .customer-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .customer-header p {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+  
+  .customer-search-wrapper {
+    max-width: 420px;
+  }
+  
+  .customer-search-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  
+  .customer-search-input:focus {
+    border-color: #111827;
+  }
+  
+  /* Vendors section */
+  
+  .customer-vendors-section {
+    margin-top: 0.5rem;
+  }
+  
+  .customer-vendor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }  
+  .customer-vendor-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .vendor-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .customer-favorite-btn {
+    border: none;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #111827;
+  }
+  .customer-message-textarea {
+    width: 100%;
+    margin: 0.4rem 0 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.75rem;
+    border: 1px solid #d1d5db;
+    font-size: 0.85rem;
+    resize: vertical;
+  }  
+
+  
+  .customer-favorite-btn--active {
+    background: #111827;
+    color: #ffffff;
+  }
+  
+  .customer-vendor-card {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .customer-vendor-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  
+  .customer-vendor-category {
+    font-size: 0.9rem;
+    color: #6366f1;
+    font-weight: 500;
+  }
+  
+  .customer-vendor-location {
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+  
+  .customer-vendor-description {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-top: 0.3rem;
+  }
+  
+  .customer-vendor-toggle-btn {
+    margin-top: 0.75rem;
+    align-self: flex-start;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    background: #111827;
+    color: #ffffff;
+    transition: background 0.15s ease, transform 0.1s ease,
+      box-shadow 0.15s ease;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+  }
+  
+  .customer-vendor-toggle-btn:hover {
+    background: #1f2933;
+    transform: translateY(-1px);
+  }
+  
+  .customer-vendor-contact {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .customer-contact-title {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-bottom: 0.45rem;
+  }
+  
+  .customer-contact-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  
+  .contact-btn {
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #111827;
+    transition: background 0.15s ease, transform 0.1s ease,
+      box-shadow 0.15s ease;
+  }
+  
+  .contact-btn:hover {
+    background: #d1d5db;
+    transform: translateY(-1px);
+  }
+  
+  .contact-btn--primary {
+    background: #111827;
+    color: #ffffff;
+  }
+  
+  .contact-btn--primary:hover {
+    background: #1f2933;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.35);
+  }
+  
+  .contact-btn--outline {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+  }
+  
+  .customer-empty-state {
+    font-size: 0.95rem;
+    color: #6b7280;
+  }
+  .customer-message-replies {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .customer-message-replies-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+    margin-bottom: 0.3rem;
+  }
+  
+  .customer-message-reply {
+    margin-top: 0.3rem;
+    font-size: 0.85rem;
+    color: #374151;
+  }
+  
+  .customer-message-reply-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 0.1rem;
+  }
+  .customer-message-replies {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .customer-message-replies-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+    margin-bottom: 0.3rem;
+  }
+  
+  .customer-message-reply {
+    font-size: 0.85rem;
+    color: #374151;
+  }
+  
+  .customer-message-reply-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 0.1rem;
+  }
+  
+  
+  
+  /* Responsive */
+  @media (max-width: 640px) {
+    .customer-main {
+      padding: 1.75rem 1.25rem 2.5rem;
+    }
+  
+    .customer-header {
+      gap: 0.75rem;
+    }
+  }
+  
