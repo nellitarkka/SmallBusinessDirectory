@@ -155,6 +155,7 @@ export const listingsAPI = {
     contactPhone: string;
     contactEmail: string;
     openingHours: string;
+    status: "draft" | "submitted" | "active" | "rejected";
   }>) => {
     return await apiCall(`/listings/${id}`, {
       method: 'PATCH',
@@ -180,12 +181,16 @@ export const listingsAPI = {
   },
 
   // Update listing status (admin only)
-  updateStatusAdmin: async (id: number | string, status: 'active' | 'rejected') => {
+  updateStatusAdmin: async (id: number | string,status: "active" | "rejected",rejectionReason?: string) => {
     return await apiCall(`/listings/admin/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
+      method: "PATCH",
+      body: JSON.stringify({
+        status,
+        ...(status === "rejected" ? { rejection_reason: rejectionReason } : {}),
+      }),
     });
   },
+  
 
   // Upload single image for a listing (vendors only)
   uploadImage: async (id: number | string, file: File) => {

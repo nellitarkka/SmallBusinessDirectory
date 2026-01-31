@@ -8,23 +8,40 @@ import { useEffect, useState } from "react";
 const AdminDashboardPage: React.FC = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
 
+  const mapListingToVendor = (l: any): Vendor => {
+    const rawDups = l.possible_duplicates ?? l.possibleDuplicates ?? [];
+    return {
+      id: l.listing_id ?? l.id,
+      name: l.title ?? l.business_name ?? "",
+      category: Array.isArray(l.categories) ? l.categories[0] : l.category,
+      location: l.city,
+      description: l.description,
+      email: l.contact_email,
+      phone: l.contact_phone,
+      status: l.status,
+      openingHours: l.opening_hours,
+      rejectionReason: l.rejection_reason ?? l.rejectionReason,
+      flaggedReason: l.flagged_reason ?? l.flaggedReason,
+  
+      possibleDuplicates: Array.isArray(rawDups)
+        ? rawDups.map((d: any) => ({
+            id: d.listing_id ?? d.id,
+            name: d.title ?? d.business_name ?? d.name ?? "",
+            location: d.city ?? d.location,
+            status: d.status,
+            score: d.score,
+          }))
+        : [],
+    };
+  };
+  
+
   useEffect(() => {
     const fetchAdminListings = async () => {
       try {
         const res = await listingsAPI.getAllAdmin();
         if (res.status === "success") {
-          const mapped: Vendor[] = res.data.listings.map((l: any) => ({
-            id: l.listing_id ?? l.id,
-            name: l.title ?? l.business_name ?? "",
-            category: Array.isArray(l.categories) ? l.categories[0] : l.category,
-            location: l.city,
-            description: l.description,
-            email: l.contact_email,
-            phone: l.contact_phone,
-            status: l.status,
-            openingHours: l.opening_hours,
-          }));
-          setVendors(mapped);
+          setVendors(res.data.listings.map(mapListingToVendor));
         }
       } catch (err) {
         console.error("Failed to fetch admin listings", err);
@@ -34,9 +51,9 @@ const AdminDashboardPage: React.FC = () => {
   }, []);
 
   // simple status-based views
-  const draftVendors = vendors.filter((v) => v.status === "draft");
-  const submittedVendors = vendors.filter((v) => v.status === "submitted");
-  const pendingVendors = [...draftVendors, ...submittedVendors]; // Show both for moderation
+  // const draftVendors = vendors.filter((v) => v.status === "draft");
+  // const submittedVendors = vendors.filter((v) => v.status === "submitted");
+  const pendingVendors = vendors.filter((v) => v.status === "submitted");
   const approvedVendors = vendors.filter((v) => v.status === "active");
   const rejectedVendors = vendors.filter((v) => v.status === "rejected");
   const reportedVendors = vendors.filter((v) => v.flaggedReason); // NEW
@@ -56,25 +73,14 @@ const AdminDashboardPage: React.FC = () => {
       return map;
     }, new Map<string, number>())
   );
-
+  
   const handleApprove = async (id: number | string) => {
     try {
       await listingsAPI.updateStatusAdmin(id, 'active');
       // Refresh the list
       const res = await listingsAPI.getAllAdmin();
       if (res.status === "success") {
-        const mapped: Vendor[] = res.data.listings.map((l: any) => ({
-          id: l.listing_id ?? l.id,
-          name: l.title ?? l.business_name ?? "",
-          category: Array.isArray(l.categories) ? l.categories[0] : l.category,
-          location: l.city,
-          description: l.description,
-          email: l.contact_email,
-          phone: l.contact_phone,
-          status: l.status,
-          openingHours: l.opening_hours,
-        }));
-        setVendors(mapped);
+        setVendors(res.data.listings.map(mapListingToVendor));
       }
     } catch (err) {
       alert("Failed to approve listing: " + (err instanceof Error ? err.message : "Unknown error"));
@@ -85,23 +91,11 @@ const AdminDashboardPage: React.FC = () => {
     const reason = window.prompt(`Reason for rejecting "${vendor.name}"?`);
     if (!reason) return;
     try {
-      await listingsAPI.updateStatusAdmin(vendor.id, 'rejected');
+      await listingsAPI.updateStatusAdmin(vendor.id, 'rejected' , reason);
       // Refresh the list
       const res = await listingsAPI.getAllAdmin();
       if (res.status === "success") {
-        const mapped: Vendor[] = res.data.listings.map((l: any) => ({
-          id: l.listing_id ?? l.id,
-          name: l.title ?? l.business_name ?? "",
-          category: Array.isArray(l.categories) ? l.categories[0] : l.category,
-          location: l.city,
-          description: l.description,
-          email: l.contact_email,
-          phone: l.contact_phone,
-          status: l.status,
-          openingHours: l.opening_hours,
-          rejectionReason: reason,
-        }));
-        setVendors(mapped);
+        setVendors(res.data.listings.map(mapListingToVendor));
       }
     } catch (err) {
       alert("Failed to reject listing: " + (err instanceof Error ? err.message : "Unknown error"));
@@ -159,25 +153,54 @@ const AdminDashboardPage: React.FC = () => {
               </p>
             ) : (
               pendingVendors.map((vendor) => (
-                <div key={vendor.id} className="admin-vendor-row">
-                  <span>{vendor.name}</span>
-                  <span>{vendor.category || "-"}</span>
-                  <span>{vendor.location || "-"}</span>
-                  <span style={{ textTransform: 'capitalize' }}>{vendor.status}</span>
-                  <span className="admin-actions">
-                    <button
-                      className="admin-btn admin-btn--approve"
-                      onClick={() => handleApprove(vendor.id)}
+                <div key={vendor.id}>
+                  <div className="admin-vendor-row">
+                    <span>{vendor.name}</span>
+                    <span>{vendor.category || "-"}</span>
+                    <span>{vendor.location || "-"}</span>
+                    <span style={{ textTransform: "capitalize" }}>{vendor.status}</span>
+                    <span className="admin-actions">
+                      <button
+                        className="admin-btn admin-btn--approve"
+                        disabled={vendor.status !== "submitted"}
+                        onClick={() => handleApprove(vendor.id)}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="admin-btn admin-btn--danger"
+                        disabled={vendor.status !== "submitted"}
+                        onClick={() => handleReject(vendor)}
+                      >
+                        Reject
+                      </button>
+                    </span>  
+                  </div>
+              
+                  {vendor.possibleDuplicates?.length ? (
+                    <div
+                      style={{
+                        padding: "0.5rem 0.25rem 0.75rem 0.25rem",
+                        fontSize: "0.9rem",
+                        color: "#555",
+                      }}
                     >
-                      Approve
-                    </button>
-                    <button
-                      className="admin-btn admin-btn--danger"
-                      onClick={() => handleReject(vendor)}
-                    >
-                      Reject
-                    </button>
-                  </span>
+                      <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                        Possible duplicates
+                      </div>
+              
+                      <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                        {vendor.possibleDuplicates.slice(0, 3).map((d) => (
+                          <li key={String(d.id)}>
+                            <span style={{ fontWeight: 600 }}>{d.name || "Untitled"}</span>
+                            {d.location ? ` — ${d.location}` : ""}
+                            {typeof d.score === "number" ? ` (score: ${d.score.toFixed(2)})` : ""}
+                            {d.status ? ` — ${d.status}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
               ))
             )}
