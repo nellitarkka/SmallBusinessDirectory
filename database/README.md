@@ -1,57 +1,57 @@
 # **Database Design – Small Business Vendor Directory**
 
-This document describes the relational database design for the **Small Business Vendor Directory** project.
-It defines the schema, constraints, relationships, seed data, views, and integration guidelines required to support the MVP.
+This document describes the relational database design for the **Small Business Vendor Directory** project across **Deliverables I–III**.
+It defines the schema, constraints, relationships, query layer, and database-level security mechanisms supporting the MVP.
 
-The database uses a **role-based users model**, where customers, vendors, and admins all share a common `users` table and differ through a `role` column and related tables.
+The database uses a **role-based users model**, where customers, vendors, and admins share a common `users` table and are differentiated by a `role` column and related tables.
 
 ---
 
-# **1. Overview**
+## **1. Overview**
 
-## Core Tables
+### Core Tables
 
 * `users` — authentication accounts (admin, vendor, customer)
 * `vendors` — vendor business profiles
 * `listings` — business listings visible in the directory
 * `categories` — predefined listing categories
 
-## Link / Relationship Tables
+### Relationship Tables
 
 * `listing_categories` — many-to-many between listings and categories
-* `favorites` — saved/favorited listings per user
+* `favorites` — saved listings per user
 
-## Messaging & Moderation
+### Messaging, Trust & Moderation
 
-* `messages` — inquiry messages between users & vendors
-* `reports` — user-submitted reports against listings
+* `messages` — user ↔ vendor communication
+* `inquiries` — inquiry threads linked to listings
+* `reports` — user-submitted reports
+* `admin_actions` — moderation and audit log
 
-## Administration & Security
+### Security & Authentication Support
 
-* `admin_actions` — moderation/audit log
 * `email_verification_tokens`
 * `password_reset_tokens`
+* `rate_limits`
 
-These tables support all MVP features:
-public browsing, search, vendor dashboards, favorites, messaging, reporting & moderation, and user authentication flows.
+These tables support browsing, search, vendor dashboards, messaging, inquiries, reporting, moderation, and authentication flows.
 
 ---
 
-# **2. Table Descriptions**
+## **2. Core Schema Highlights**
 
 ### `users`
 
 Stores all platform accounts.
 
-Important columns:
+Key columns:
 
 * `email` (unique)
 * `password_hash`
 * `role` (`customer`, `vendor`, `admin`)
-* `first_name`, `last_name`
+* `is_email_verified`
+* `ghost_strikes`
 * timestamps
-
-Used by authentication and linked everywhere else.
 
 ---
 
@@ -59,26 +59,13 @@ Used by authentication and linked everywhere else.
 
 Vendor-specific business data.
 
-Columns:
+Key columns:
 
-* `user_id` (unique FK → `users.id`)
+* `user_id` (FK → `users.id`)
 * `business_name`, `vat_number`, `city`
 * `is_verified`
 
-Each vendor has exactly one user with role `'vendor'`.
-
----
-
-### `categories`
-
-Predefined list of service categories.
-
-Columns:
-
-* `name` (unique)
-* `is_active`
-
-Used for search filters and listing classification.
+Each vendor is linked to exactly one user account.
 
 ---
 
@@ -86,370 +73,133 @@ Used for search filters and listing classification.
 
 Vendor-created directory entries.
 
-Columns:
+Key columns:
 
 * `vendor_id` (FK → `vendors.id`)
 * `title`, `description`, `city`
 * `contact_email`, `contact_phone`
 * `status` (`draft`, `submitted`, `active`, `rejected`)
-* `opening_hours`
 * timestamps
 
-Listings appear in public search only when `status = 'active'`.
-
----
-
-### `listing_categories`
-
-Join table: listings ↔ categories.
-
-Columns:
-
-* `listing_id`, `category_id`
-* Composite PK `(listing_id, category_id)`
-
-Enables multi-category listings.
-
----
-
-### `favorites`
-
-Tracks listings saved by users.
-
-Columns:
-
-* `user_id`, `listing_id`
-* `created_at`
-
-Composite PK `(user_id, listing_id)`.
+Only `active` listings appear in public search.
 
 ---
 
 ### `messages`
 
-Inquiry communication system.
+Communication system between users and vendors.
 
-Columns:
+Key columns:
 
 * `listing_id`
-* `sender_user_id`, `receiver_user_id`
-* `subject`, `body`
-* `is_read`
-* `created_at`
+* `sender_id`, `recipient_id`
+* `subject`, `content`
+* `inquiry_id` (optional)
+* `read`, `created_at`
 
-Used by the interactive messaging feature.
+Direct inserts are discouraged; message creation is handled via database functions.
 
 ---
 
-### `reports`
+### `inquiries` *(Deliverable III)*
 
-User-reported issues with listings.
+Inquiry threads tied to listings.
 
-Columns:
+Key columns:
 
+* `customer_id`
+* `vendor_user_id`
 * `listing_id`
-* `reporter_user_id`
-* `reason`
-* `status` (`open`, `in_review`, `resolved`)
+* `status` (`open`, `accepted`, `rejected`, `no_show`, `closed`)
 * timestamps
 
-Supports moderation flows.
+Only one open inquiry per user–listing pair is allowed.
 
 ---
 
-### `admin_actions`
+## **3. Security & Abuse Prevention (Deliverable III)**
 
-Moderation / audit log.
+Deliverable III introduces **database-level enforcement** to ensure secure and consistent behavior.
 
-Columns:
+### Implemented Mechanisms
 
-* `admin_user_id`
-* `action_type`
-* `listing_id`
-* `target_user_id`
-* `details`
-* `created_at`
+* Email verification enforcement for messaging and inquiries
+* Rate limiting for message and inquiry creation
+* Inquiry-based messaging tied to listings
+* Vendor-controlled inquiry status updates
+* Ghost-strike tracking for unreliable user behavior
+* Vendor duplicate prevention using normalized fields and unique constraints
+* Automatic `updated_at` handling via triggers
 
-Used by admin dashboard to show moderation history.
-
----
-
-### `email_verification_tokens` / `password_reset_tokens`
-
-Columns:
-
-* `user_id`
-* `token`
-* `expires_at`
-* `used`
-
-Used by authentication teammate for verification and reset flows.
+All enforcement is handled **inside the database**, independent of backend application logic.
 
 ---
 
-# **3. Files in the `database/` Directory**
+## **4. Database Migrations**
+
+All database changes are implemented as **versioned SQL migrations**, located in:
 
 ```
-database/
-│
-├── schema.sql
-├── seed.sql
-├── migrations/
-│     ├── 001_initial_schema.sql
-│     ├── 002_indexes_and_extensions.sql
-│     ├── 003_views.sql
-│
-└── tests/
-      ├── test_plan.md
-      └── manual_test_queries.sql
+database/migrations/
 ```
 
-### `schema.sql`
+Relevant migration files include:
 
-Full SQL schema definition (tables + constraints).
+* `001_initial_schema.sql`
+* `002_indexes_and_extensions.sql`
+* `003_views.sql`
+* `005_security_baseline.sql`
+* `006_messaging_security.sql`
+* `007_inquiries.sql`
+* `007_inquiries_patch.sql` (schema-aware vendor user resolution)
 
-### Migrations
-
-* `001_initial_schema.sql` — core tables & relationships
-* `002_indexes_and_extensions.sql` — indexes for search & performance
-* `003_views.sql` — query layer views (public listings, vendor dashboard, etc.)
-
-### `seed.sql`
-
-Creates a realistic, rich dataset:
-
-* 1 admin user
-* 3 vendors
-* 3 customers
-* 10 categories
-* 9 listings across multiple cities and statuses
-* structured listing-category assignments
-* multiple favorites per user
-* several inquiry messages
-* multiple reports + admin actions
-* verification and reset tokens
-
-This dataset makes development, UI previews, and testing realistic.
+These migrations were applied and verified on the project’s Supabase database.
 
 ---
 
-# **4. Query Layer (SQL Views)**
+## **5. Query Layer (SQL Views)**
 
-Located in `migrations/003_views.sql`.
+Defined in `003_views.sql` to support read-heavy operations:
 
-### `public_listings_view`
+* `public_listings_view` — public browsing & search
+* `vendor_listings_view` — vendor dashboard
+* `user_favorites_view` — saved listings
+* `open_reports_view` — admin moderation queue
 
-For **public browsing & search**.
-Includes:
-
-* only `active` listings
-* vendor info
-* aggregated categories array
-
-Used by backend for search endpoints.
+Backend components are expected to use views for **read operations**.
 
 ---
 
-### `vendor_listings_view`
+## 6. Testing Overview
 
-For **vendor dashboards**.
-Includes:
+Two levels of database testing are included:
 
-* all listings belonging to a vendor
-* `favorite_count` per listing
+- `tests/`  
+  Contains schema-level and relational integrity tests created for Deliverable 2
+  (tables, constraints, relationships, views).
 
-Used by backend for vendor “My Listings”.
-
----
-
-### `user_favorites_view`
-
-For **user favorites page**.
-Includes:
-
-* listing details
-* business name
-* favorited timestamp
+- `docs/database_manual_tests.md`  
+  Contains manual validation queries for Deliverable 3, focusing on
+  security, messaging, inquiry workflows, and abuse-prevention logic.
 
 ---
 
-### `open_reports_view`
+## **7. Integration Notes**
 
-For **admin moderation**.
-Includes:
-
-* open/in_review reports
-* listing metadata
-* vendor info
-
-Used by backend for the moderation queue.
+* Database functions must be used for messaging and inquiry creation.
+* Direct inserts into `messages` and `inquiries` should be avoided.
+* Views should be used for read-heavy endpoints.
+* Authentication flows rely on `users`, `email_verification_tokens`, and `password_reset_tokens`.
 
 ---
 
-# **5. Seed Data Overview**
+## **8. Conclusion**
 
-The seed file creates:
+The database provides a solid foundation for the MVP, combining:
 
-### Users
+* a normalized relational schema,
+* optimized query views,
+* database-enforced security and trust mechanisms,
+* and documented validation procedures.
 
-* 1 admin
-* 3 vendors (verified + unverified)
-* 3 customers
-
-### Vendors
-
-Each vendor has a business profile with VAT, city, verified status.
-
-### Categories
-
-10 categories including plumber, electrician, IT services, carpenter, painter, gardener, etc.
-
-### Listings
-
-9 listings:
-
-* multiple cities (Luxembourg, Esch, Differdange)
-* mixed statuses (`active`, `submitted`, `draft`, `rejected`)
-* realistic descriptions
-* proper vendor linking
-
-### Listing–Category Assignments
-
-Each listing is associated with 1–2 categories.
-
-### Favorites
-
-Users have varied favorite listings (2–3 each).
-
-### Messages
-
-Realistic conversations:
-
-* customers → vendors
-* subject + body content
-
-### Reports & Admin Actions
-
-Multiple reports with different statuses
-Moderation actions logged for audit.
-
-### Tokens
-
-Two email verification tokens
-Two password reset tokens
-
----
-
-# **6. Testing Strategy**
-
-Testing files:
-
-* `tests/test_plan.md` — structured test checklist
-* `tests/manual_test_queries.sql` — runnable SQL for each test
-
-Tests cover:
-
-### Constraints
-
-* unique email
-* valid roles
-* valid statuses
-* foreign key integrity
-
-### Relationships
-
-* users ↔ vendors
-* vendors ↔ listings
-* listings ↔ categories
-* users ↔ favorites
-* messages with valid users/listings
-
-### Cascading Behavior
-
-Deleting a vendor removes their listings.
-
-### Views
-
-* public listings show only active + categories
-* vendor view shows favorite_count
-* favorites view matches favorites table
-* reports view shows only open/in_review
-
-Everything must pass without unexpected errors.
-
----
-
-# **7. Integration Guide for Teammates**
-
-This section tells your backend/frontend/auth teammates how to use your DB.
-
----
-
-## Backend Developer
-
-### Use views for READ operations:
-
-| Feature          | View                   |
-| ---------------- | ---------------------- |
-| Search listings  | `public_listings_view` |
-| Vendor dashboard | `vendor_listings_view` |
-| Favorites page   | `user_favorites_view`  |
-| Moderation queue | `open_reports_view`    |
-
-### Use tables for WRITE operations:
-
-* `users`, `vendors`
-* `listings`, `listing_categories`
-* `favorites`
-* `messages`
-* `reports`, `admin_actions`
-* verification + password tokens
-
----
-
-## Frontend Developer
-
-Expect backend to feed:
-
-* homepage search → `public_listings_view`
-* vendor dashboard → `vendor_listings_view`
-* favorites page → `user_favorites_view`
-* admin UI → `open_reports_view`
-
-The extended dataset makes all pages look populated.
-
----
-
-## Authentication Developer
-
-Use:
-
-* `users`
-* `email_verification_tokens`
-* `password_reset_tokens`
-
-Vendor registration requires creating:
-
-1. a user with role `'vendor'`
-2. a row in `vendors`
-
----
-
-## Interactive Features Developer (Messaging, Reporting)
-
-Use:
-
-* `messages`
-* `reports`
-* `open_reports_view`
-* `admin_actions`
-
-The extended dataset includes samples of each flow.
-
----
-
-# **8. Conclusion**
-
-This database provides a fully functional foundation for our MVP of the Small Business Vendor Directory.
-
-It includes a normalized relational schema, strong constraints and indexing, a realistic seed data, optimized SQL views for core user flows, a complete manual testing suite and clear integration guidance for backend, frontend, authentication, and interactive features.
+Together, these elements support all core features of the **Small Business Vendor Directory** across Deliverables I–III.
