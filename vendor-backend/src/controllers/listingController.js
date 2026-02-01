@@ -202,9 +202,9 @@ exports.update = async (req, res) => {
     if (req.body.title !== undefined) updateData.title = req.body.title;
     if (req.body.description !== undefined) updateData.description = req.body.description;
     if (req.body.city !== undefined) updateData.city = req.body.city;
-    if (req.body.contact_email !== undefined) updateData.contact_email = req.body.contact_email;
-    if (req.body.contact_phone !== undefined) updateData.contact_phone = req.body.contact_phone;
-    if (req.body.opening_hours !== undefined) updateData.opening_hours = req.body.opening_hours;
+    if (req.body.contactEmail !== undefined) updateData.contact_email = req.body.contactEmail;
+    if (req.body.contactPhone !== undefined) updateData.contact_phone = req.body.contactPhone;
+    if (req.body.openingHours !== undefined) updateData.opening_hours = req.body.openingHours;
     if (req.body.status !== undefined) updateData.status = req.body.status;
     
     console.log(`[UPDATE] Updating with data:`, updateData);
