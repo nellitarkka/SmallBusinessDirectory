@@ -16,6 +16,8 @@ interface Listing {
   status: string;
   opening_hours?: string;
   image_url?: string;
+  rejection_reason?: string;
+  rejectionReason?: string;
 }
 
 interface VendorProfile {
@@ -38,6 +40,21 @@ const VendorDashboardPage: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
 
+  const MAX_TITLE = 80;
+  const MAX_CITY = 60;
+  const MAX_DESC = 600;
+  const MAX_OPENING = 120;
+  const MAX_EMAIL = 120;
+  const MAX_PHONE = 40;
+
+  type FieldErrors = Partial<Record<
+    "title" | "city" | "description" | "contactEmail" | "contactPhone" | "openingHours",
+    string
+  >>;
+
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -49,7 +66,7 @@ const VendorDashboardPage: React.FC = () => {
   const [imageStatus, setImageStatus] = useState<string>("");
 
   // Fetch vendor profile and listings on mount
-  useEffect(() => {
+  useEffect(() => { 
     const initializeData = async () => {
       await fetchVendorProfile();
       await fetchMyListings();
@@ -102,6 +119,12 @@ const VendorDashboardPage: React.FC = () => {
 
   // Update form when selected listing changes
   useEffect(() => {
+    setStatusMessage("");
+    setSubmitError("");
+    setFieldErrors({});
+    setImageFile(null);
+    setImageStatus("");
+
     if (selectedListingId) {
       const listing = listings.find(l => l.id === selectedListingId);
       if (listing) {
@@ -111,9 +134,48 @@ const VendorDashboardPage: React.FC = () => {
     }
   }, [selectedListingId, listings]);
 
+
+  const validateForm = (): FieldErrors => {
+    const errors: FieldErrors = {};
+  
+    const t = title.trim();
+    const c = city.trim();
+    const d = description.trim();
+    const e = contactEmail.trim();
+    const p = contactPhone.trim();
+    const oh = openingHours.trim();
+  
+    if (!t) errors.title = "Business title is required.";
+    else if (t.length > MAX_TITLE) errors.title = `Max ${MAX_TITLE} characters.`;
+  
+    if (!c) errors.city = "City is required.";
+    else if (c.length > MAX_CITY) errors.city = `Max ${MAX_CITY} characters.`;
+  
+    if (!d) errors.description = "Description is required.";
+    else if (d.length > MAX_DESC) errors.description = `Max ${MAX_DESC} characters.`;
+  
+    if (e && e.length > MAX_EMAIL) errors.contactEmail = `Max ${MAX_EMAIL} characters.`;
+    // optional: basic email check only if non-empty
+    if (e && !/^\S+@\S+\.\S+$/.test(e)) errors.contactEmail = "Invalid email format.";
+  
+    if (p && p.length > MAX_PHONE) errors.contactPhone = `Max ${MAX_PHONE} characters.`;
+    if (oh && oh.length > MAX_OPENING) errors.openingHours = `Max ${MAX_OPENING} characters.`;
+  
+    return errors;
+  };
+  
+
   const handleCreateListing = async () => {
     setSubmitError("");
     setStatusMessage("");
+
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setSubmitError("Please fix the highlighted fields.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -136,6 +198,7 @@ const VendorDashboardPage: React.FC = () => {
         setCity("");
         setContactPhone("");
         setOpeningHours("");
+        setFieldErrors({});
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to create listing";
@@ -150,6 +213,15 @@ const VendorDashboardPage: React.FC = () => {
     setStatusMessage("");
     setSubmitError("");
     setIsSubmitting(true);
+
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setSubmitError("Please fix the highlighted fields.");
+      setIsSubmitting(false);
+      return;
+    }
+
 
     if (!selectedListingId) {
       setSubmitError("No listing selected");
@@ -202,28 +274,58 @@ const VendorDashboardPage: React.FC = () => {
   };
 
   const handleSubmitForReview = async () => {
-    if (!selectedListingId) return;
-
     setStatusMessage("");
     setSubmitError("");
-    setIsSubmitting(true);
+  
+    const listing = selectedListingId ? listings.find(l => l.id === selectedListingId) : null;
+    const statusBefore = listing?.status;
+  
+    if (vendorProfile && !vendorProfile.is_verified) {
+      setSubmitError("You must be verified before submitting a listing for review.");
+      return;
+    }
+  
+    if (!selectedListingId) return;
 
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setSubmitError("Please fix the highlighted fields before submitting for review.");
+      return;
+    }
+
+  
+    setIsSubmitting(true);
     try {
-      const response = await listingsAPI.update(selectedListingId, {
-        status: 'submitted',
-      });
-      
-      if (response.status === 'success') {
-        setStatusMessage("Listing submitted for admin review!");
-        await fetchMyListings(); // Refresh to show new status
+      const response = await listingsAPI.update(selectedListingId, { status: "submitted" });
+  
+      if (response.status === "success") {
+        setStatusMessage(
+          statusBefore === "rejected"
+            ? "Listing resubmitted for admin review!"
+            : "Listing submitted for admin review!"
+        );
+        await fetchMyListings();
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to submit for review";
-      setSubmitError(errorMsg);
+      setSubmitError(err instanceof Error ? err.message : "Failed to submit for review");
     } finally {
       setIsSubmitting(false);
     }
   };
+  
+
+    const currentListing = selectedListingId
+      ? listings.find((l) => l.id === selectedListingId)
+      : null;
+
+    const currentStatus = currentListing?.status;
+
+    const canSubmitForReview =
+      currentStatus === "draft" || currentStatus === "rejected";
+    
+    const isVerified = vendorProfile?.is_verified !== false;
+
 
   return (
     <div className="vendor-page-root">
@@ -238,6 +340,21 @@ const VendorDashboardPage: React.FC = () => {
           </p>
         </header>
 
+        {vendorProfile && !vendorProfile.is_verified && (
+          <div
+            style={{
+              maxWidth: "1200px",
+              margin: "0 auto 1rem auto",
+              padding: "0.75rem 1rem",
+              borderRadius: 8,
+              background: "#f8d7da",
+              border: "1px solid #f5c6cb",
+              color: "#721c24",
+            }}
+          >
+            <strong>Account not verified.</strong> You can create and edit drafts, but you must be verified before submitting for review.
+          </div>
+        )}
         {isLoading ? (
           <div style={{ padding: "2rem", textAlign: "center" }}>
             <p>Loading your listings...</p>
@@ -252,7 +369,12 @@ const VendorDashboardPage: React.FC = () => {
             <button
               type="button"
               className="vendor-submit-button"
-              onClick={() => setShowCreateForm(true)}
+              onClick={() => {
+                setShowCreateForm(true);
+                setFieldErrors({});
+                setSubmitError("");
+                setStatusMessage("");
+              }}              
             >
               Create Your First Listing
             </button>
@@ -272,9 +394,19 @@ const VendorDashboardPage: React.FC = () => {
                   type="text"
                   className="vendor-input"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={MAX_TITLE}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, title: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.title && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.title}
+                  </div>
+                )}
+
               </div>
 
               <div className="vendor-field">
@@ -285,9 +417,19 @@ const VendorDashboardPage: React.FC = () => {
                   className="vendor-input"
                   placeholder="Luxembourg, Esch-sur-Alzette..."
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  maxLength={MAX_CITY}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, city: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.city && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.city}
+                  </div>
+                )}
+
               </div>
 
               <div className="vendor-field">
@@ -334,9 +476,19 @@ const VendorDashboardPage: React.FC = () => {
                   rows={4}
                   placeholder="Describe your services and special offers..."
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={MAX_DESC}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.description && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.description}
+                  </div>
+                )}
+
               </div>
 
               {submitError && (
@@ -350,7 +502,13 @@ const VendorDashboardPage: React.FC = () => {
               <button
                 type="button"
                 className="vendor-save-button"
-                onClick={() => setShowCreateForm(false)}
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setFieldErrors({});
+                  setSubmitError("");
+                  setStatusMessage("");
+                }}
+                
                 style={{ marginLeft: "1rem", backgroundColor: "#999" }}
               >
                 Cancel
@@ -370,7 +528,11 @@ const VendorDashboardPage: React.FC = () => {
                 type="button"
                 className="vendor-submit-button"
                 onClick={() => {
+                  setSelectedListingId(null);
                   setShowCreateForm(true);
+                  setFieldErrors({});
+                  setSubmitError("");
+                  setStatusMessage("");
                   setTitle(vendorProfile?.business_name || "");
                   setCity(vendorProfile?.city || "");
                   setDescription("");
@@ -469,9 +631,18 @@ const VendorDashboardPage: React.FC = () => {
                 type="text"
                 className="vendor-input"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                maxLength={MAX_TITLE}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, title: undefined }));
+                }}
                 required
               />
+              {fieldErrors.title && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.title}
+                </div>
+              )}
             </div>
 
             <div className="vendor-field">
@@ -484,9 +655,18 @@ const VendorDashboardPage: React.FC = () => {
                 className="vendor-input"
                 placeholder="Luxembourg, Esch-sur-Alzette..."
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
+                maxLength={MAX_CITY}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, city: undefined }));
+                }}
                 required
               />
+              {fieldErrors.city && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.city}
+                </div>
+              )}
             </div>
 
             <div className="vendor-field">
@@ -499,8 +679,18 @@ const VendorDashboardPage: React.FC = () => {
                 className="vendor-input"
                 placeholder="you@business.com"
                 value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
+                maxLength={MAX_EMAIL}
+                onChange={(e) => {
+                  setContactEmail(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, contactEmail: undefined }));
+                }}
               />
+              {fieldErrors.contactEmail && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.contactEmail}
+                </div>
+              )}
+
             </div>
 
             <div className="vendor-field">
@@ -513,8 +703,18 @@ const VendorDashboardPage: React.FC = () => {
                 className="vendor-input"
                 placeholder="+352 ..."
                 value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                maxLength={MAX_PHONE}
+                onChange={(e) => {
+                  setContactPhone(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, contactPhone: undefined }));
+                }}
               />
+              {fieldErrors.contactPhone && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.contactPhone}
+                </div>
+              )}
+
             </div>
 
             <div className="vendor-field">
@@ -527,8 +727,18 @@ const VendorDashboardPage: React.FC = () => {
                 className="vendor-input"
                 placeholder="e.g. Mon–Fri 9:00–18:00, Sat 10:00–16:00"
                 value={openingHours}
-                onChange={(e) => setOpeningHours(e.target.value)}
+                maxLength={MAX_OPENING}
+                onChange={(e) => {
+                  setOpeningHours(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, openingHours: undefined }));
+                }}
               />
+              {fieldErrors.openingHours && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.openingHours}
+                </div>
+              )}
+
             </div>
 
             <div className="vendor-field">
@@ -541,9 +751,19 @@ const VendorDashboardPage: React.FC = () => {
                 rows={4}
                 placeholder="Describe your services and special offers..."
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                maxLength={MAX_DESC}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                }}
                 required
               />
+              {fieldErrors.description && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.description}
+                </div>
+              )}
+
             </div>
 
             {statusMessage && (
@@ -559,16 +779,18 @@ const VendorDashboardPage: React.FC = () => {
                 {isSubmitting ? "Saving..." : "Save Changes"}
               </button>
               
-              {listings.find(l => l.id === selectedListingId)?.status === 'draft' && (
+              {canSubmitForReview && (
                 <button
                   type="button"
                   className="vendor-submit-button"
                   onClick={handleSubmitForReview}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isVerified}
+                  title={!isVerified ? "You must be verified before submitting." : ""}
                 >
                   {isSubmitting ? "Submitting..." : "Submit for Review"}
                 </button>
               )}
+
             </div>
 
             {listings.find(l => l.id === selectedListingId) && (
@@ -606,9 +828,22 @@ const VendorDashboardPage: React.FC = () => {
                   </p>
                 )}
                 {listings.find(l => l.id === selectedListingId)?.status === 'rejected' && (
-                  <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem", color: "#6c757d" }}>
-                    ❌ Your listing was rejected. Please review and update it before resubmitting
-                  </p>
+                  <>
+                    <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem", color: "#6c757d" }}>
+                      ❌ Your listing was rejected. Please review and update it before resubmitting
+                    </p>
+
+                    {(() => {
+                      const l = listings.find(x => x.id === selectedListingId);
+                      const reason = l?.rejection_reason || (l as any)?.rejectionReason;
+                      return reason ? (
+                        <div style={{ marginTop: "0.75rem", padding: "0.75rem", background: "#fff3cd", border: "1px solid #ffeeba", borderRadius: 6 }}>
+                          <strong>Rejection reason:</strong>
+                          <div style={{ marginTop: 6 }}>{reason}</div>
+                        </div>
+                      ) : null;
+                    })()}
+                  </>
                 )}
               </div>
             )}
@@ -690,9 +925,19 @@ const VendorDashboardPage: React.FC = () => {
                   type="text"
                   className="vendor-input"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={MAX_TITLE}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, title: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.title && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.title}
+                  </div>
+                )}
+
               </div>
 
               <div className="vendor-field">
@@ -703,9 +948,19 @@ const VendorDashboardPage: React.FC = () => {
                   className="vendor-input"
                   placeholder="Luxembourg, Esch-sur-Alzette..."
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  maxLength={MAX_CITY}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, city: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.city && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.city}
+                  </div>
+                )}
+
               </div>
 
               <div className="vendor-field">
@@ -716,9 +971,19 @@ const VendorDashboardPage: React.FC = () => {
                   rows={4}
                   placeholder="Describe your services and special offers..."
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={MAX_DESC}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.description && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.description}
+                  </div>
+                )}
+
               </div>
 
               {submitError && (
@@ -732,7 +997,12 @@ const VendorDashboardPage: React.FC = () => {
               <button
                 type="button"
                 className="vendor-save-button"
-                onClick={() => setShowCreateForm(false)}
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setFieldErrors({});
+                  setSubmitError("");
+                  setStatusMessage("");
+                }}                
                 style={{ marginLeft: "1rem", backgroundColor: "#999" }}
               >
                 Cancel
