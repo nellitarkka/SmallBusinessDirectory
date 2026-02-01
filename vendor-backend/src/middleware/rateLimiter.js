@@ -10,13 +10,8 @@ const messageLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Use user ID from JWT as the key, no IP fallback to avoid IPv6 issues
-  keyGenerator: (req) => {
-    if (req.user && req.user.userId) {
-      return `user_${req.user.userId}`;
-    }
-    throw new Error('Authentication required for rate limiting');
-  },
+  // Use user ID from JWT as the key
+  keyGenerator: (req) => `user_${req.user.userId}`,
   skip: (req) => !req.user, // Skip if not authenticated (auth middleware will handle)
   skipFailedRequests: false
 });
@@ -31,12 +26,7 @@ const listingCreationLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    if (req.user && req.user.userId) {
-      return `user_${req.user.userId}`;
-    }
-    throw new Error('Authentication required for rate limiting');
-  },
+  keyGenerator: (req) => `user_${req.user.userId}`,
   skip: (req) => !req.user,
   skipFailedRequests: false
 });
