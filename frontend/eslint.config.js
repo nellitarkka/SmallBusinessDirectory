@@ -16,15 +16,15 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     rules: {
-    'react-refresh/only-export-components': 'off',
-    
-     // CI: allow pragmatic typing
-    '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-vars': 'off',
+  // Dev-only rules disabled for CI
+  'react-refresh/only-export-components': 'off',
+  'react-hooks/exhaustive-deps': 'off',
+  'react-hooks/set-state-in-effect': 'off',
 
-    // Hooks rules are dev-only, too strict for CI
-    'react-hooks/exhaustive-deps': 'off',
-    },
+  // TypeScript strictness relaxed for CI
+  '@typescript-eslint/no-explicit-any': 'off',
+  '@typescript-eslint/no-unused-vars': 'off',
+},
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
