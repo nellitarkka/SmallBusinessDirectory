@@ -33,7 +33,6 @@ router.get('/:id', listingController.getOne);
 router.post('/', authenticate, requireRole('vendor'), listingCreationLimiter, validateCreateListing, listingController.create);
 router.get('/vendor/my-listings', authenticate, requireRole('vendor'), listingController.getMine);
 router.patch('/:id', authenticate, requireRole('vendor'), validateUpdateListing, listingController.update);
-router.patch('/:id', authenticate, requireRole('vendor'), listingController.update);
 router.patch('/:id/image', authenticate, requireRole('vendor'), upload.single('image'), listingController.uploadImage);
 router.delete('/:id', authenticate, requireRole('vendor'), listingController.delete);
 
