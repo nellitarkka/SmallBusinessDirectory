@@ -11,7 +11,7 @@ describe('Authentication Endpoints', () => {
         .post('/api/auth/register')
         .send({
           email: testUserEmail,
-          password: 'testpassword123',
+          password: 'TestPass123',  // Fixed: uppercase + lowercase + number
           role: 'customer',
           firstName: 'Test',
           lastName: 'User'
@@ -30,7 +30,7 @@ describe('Authentication Endpoints', () => {
         .post('/api/auth/register')
         .send({
           email: testUserEmail,
-          password: 'testpassword123',
+          password: 'TestPass123',  // Fixed: matches above
           role: 'customer',
           firstName: 'Test',
           lastName: 'User'
@@ -47,7 +47,7 @@ describe('Authentication Endpoints', () => {
           email: 'incomplete@test.com'
         });
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);  // Fixed: validation returns 400, not 500
     });
   });
 
@@ -57,7 +57,7 @@ describe('Authentication Endpoints', () => {
         .post('/api/auth/login')
         .send({
           email: testUserEmail,
-          password: 'testpassword123'
+          password: 'TestPass123'  // Fixed: matches registration password
         });
 
       expect(response.status).toBe(200);
@@ -82,7 +82,7 @@ describe('Authentication Endpoints', () => {
         .post('/api/auth/login')
         .send({
           email: 'nonexistent@test.com',
-          password: 'testpassword123'
+          password: 'TestPass123'
         });
 
       expect(response.status).toBe(401);
@@ -112,7 +112,7 @@ describe('Authentication Endpoints', () => {
         .get('/api/auth/profile')
         .set('Authorization', 'Bearer invalid_token');
 
-      expect(response.status).toBe(40);
+      expect(response.status).toBe(401);
     });
   });
 });
