@@ -71,10 +71,10 @@ const validateUpdateListing = [
     .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters'),
   
   body('city')
-    .optional()
-    .trim()
-    .notEmpty().withMessage('City cannot be empty')
-    .isLength({ max: 50 }).withMessage('City name too long'),
+  .optional()
+  .trim()
+  .notEmpty().withMessage('City cannot be empty')
+  .isLength({ min: 2, max: 50 }).withMessage('City must be 2-50 characters'),
   
   body('contactEmail')
     .optional()
