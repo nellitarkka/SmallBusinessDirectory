@@ -4,10 +4,10 @@ const Message = require('../models/message');
 exports.sendMessage = async (req, res) => {
   try {
     const senderId = req.user.userId;
-    // Frontend payload: { recipient_id, content, listing_id, subject }
-    const { recipient_id, content, listing_id, subject } = req.body;
+    // Frontend payload: { recipientId, content, listingId, subject }
+    const { recipientId, content, listingId, subject } = req.body;
 
-    if (!recipient_id || !content) {
+    if (!recipientId || !content) {
       return res.status(400).json({
         status: 'error',
         message: 'Recipient ID and content are required'
@@ -16,8 +16,8 @@ exports.sendMessage = async (req, res) => {
 
     const message = await Message.create(
       senderId,
-      Number(recipient_id),
-      listing_id ? Number(listing_id) : null,
+      Number(recipientId),
+      listingId ? Number(listingId) : null,
       subject || '',
       content
     );
