@@ -32,3 +32,5 @@ logs/
 dist/
 build/
 .env
+# ignore user upload
+src/uploads/
