@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const listingController = require('../controllers/listingController');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { validateCreateListing, validateUpdateListing } = require('../middleware/validators/listingValidators');
+const { listingCreationLimiter } = require('../middleware/rateLimiter');
 const multer = require('multer');
 const path = require('path');
 
@@ -28,9 +30,9 @@ router.get('/', listingController.getAll);
 router.get('/:id', listingController.getOne);
 
 // Protected vendor routes (authentication + vendor role required)
-router.post('/', authenticate, requireRole('vendor'), listingController.create);
+router.post('/', authenticate, requireRole('vendor'), listingCreationLimiter, validateCreateListing, listingController.create);
 router.get('/vendor/my-listings', authenticate, requireRole('vendor'), listingController.getMine);
-router.patch('/:id', authenticate, requireRole('vendor'), listingController.update);
+router.patch('/:id', authenticate, requireRole('vendor'), validateUpdateListing, listingController.update);
 router.patch('/:id/image', authenticate, requireRole('vendor'), upload.single('image'), listingController.uploadImage);
 router.delete('/:id', authenticate, requireRole('vendor'), listingController.delete);
 

@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const messageController = require('../controllers/messageController');
 const { authenticate } = require('../middleware/auth');
+const { validateSendMessage } = require('../middleware/validators/messageValidators');
+const { messageLimiter } = require('../middleware/rateLimiter');
 
 // All routes require authentication
 router.use(authenticate);
 
-// Send a message
-router.post('/', messageController.sendMessage);
+// Send a message (with validation and rate limiting)
+router.post('/', messageLimiter, validateSendMessage, messageController.sendMessage);
 
 // Get inbox (received messages)
 router.get('/inbox', messageController.getInbox);
