@@ -8,6 +8,8 @@ export interface Vendor {
   description?: string;
   email?: string;
   phone?: string;
+  imageUrl?: string;
+  vendorUserId?: number;
   status: VendorStatus;
   rejectionReason?: string;
   openingHours?: string;

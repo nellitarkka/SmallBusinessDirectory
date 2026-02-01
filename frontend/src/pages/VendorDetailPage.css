@@ -55,11 +55,32 @@
   }
   
   .vendor-detail-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     padding: 0.2rem 0.6rem;
     border-radius: 999px;
     font-size: 0.8rem;
     background: #e5e7eb;
     color: #111827;
+    line-height: 1.2;
+  }
+
+  .vendor-detail-tag--location {
+    background: #e0f2fe;
+    color: #0b4f6c;
+    border: 1px solid #bae6fd;
+  }
+
+  .vendor-detail-tag--muted {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+  }
+
+  .vendor-detail-icon {
+    width: 14px;
+    height: 14px;
   }
   
   .vendor-detail-fav-btn {
@@ -107,6 +128,37 @@
   .vendor-detail-btn--primary {
     background: #111827;
     color: #ffffff;
+  }
+
+  .vendor-detail-message-box {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+
+  .vendor-detail-input,
+  .vendor-detail-textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    background: #fff;
+  }
+
+  .vendor-detail-textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .vendor-detail-status {
+    font-size: 0.9rem;
+    color: #374151;
   }
   
   .vendor-detail-error {
