@@ -268,8 +268,6 @@ exports.delete = async (req, res) => {
   }
 };
 
-module.exports = exports;
-
 // Upload listing image (single) - vendor only, owns listing
 exports.uploadImage = async (req, res) => {
   try {
@@ -298,3 +296,5 @@ exports.uploadImage = async (req, res) => {
     res.status(500).json({ status: 'error', message: err.message });
   }
 };
+
+module.exports = exports;
