@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { listingsAPI, API_ORIGIN } from "../services/api";
-import type { Vendor } from "./VendorStore";
+import type { Vendor } from "./vendors";
 
 interface PublicListingsContextType {
   listings: Vendor[];
@@ -38,7 +38,7 @@ export const PublicListingsProvider = ({ children }: { children: ReactNode }) =>
           openingHours: listing.opening_hours,
           imageUrl,
           vendorUserId: listing.vendor_user_id,
-          status: "approved", // Frontend expects a status field
+          status: "active", // Frontend expects a status field
           } as Vendor);
         });
 

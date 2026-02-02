@@ -75,7 +75,7 @@ const VendorInboxPage: React.FC = () => {
                   placeholder="Write a reply..."
                   value={replyDrafts[msg.id] ?? ""}
                   onChange={(e) =>
-                    handleChangeReply(msg.id, e.target.value)
+                    handleChangeReply(String(msg.id), e.target.value)
                   }
                   rows={3}
                 />

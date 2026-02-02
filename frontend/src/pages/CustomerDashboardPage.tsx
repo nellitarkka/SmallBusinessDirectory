@@ -5,7 +5,6 @@ import { useFavorites } from "../data/FavoritesStore";
 import type { Vendor } from "../data/vendors";
 import "./CustomerDashboardPage.css";
 import { useMessages } from "../data/MessagesStore";
-import { useAuth } from "../auth/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 type VendorId = Vendor["id"];
@@ -19,8 +18,7 @@ const CustomerDashboardPage: React.FC = () => {
   const { listings: vendors } = usePublicListings();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { sendMessage } = useMessages();
-  const { user } = useAuth(); // kept (useful if you want to restrict actions later)
-
+  
   const [messageText, setMessageText] = useState("");
 
   const approvedVendors = vendors;
@@ -116,7 +114,7 @@ const CustomerDashboardPage: React.FC = () => {
             <div className="customer-vendor-grid">
               {filteredVendors.map((vendor) => {
                 const isExpanded = expandedVendorId === vendor.id;
-                const favorite = isFavorite(vendor.id);
+                const favorite = isFavorite(Number(vendor.id));
 
                 return (
                   <article key={vendor.id} className="vendor-card">
@@ -130,7 +128,7 @@ const CustomerDashboardPage: React.FC = () => {
                             ? "vendor-save-btn vendor-save-btn--active"
                             : "vendor-save-btn"
                         }
-                        onClick={() => toggleFavorite(vendor.id)}
+                        onClick={() => toggleFavorite(Number(vendor.id))}
                       >
                         {favorite ? "♥ Saved" : "♡ Save"}
                       </button>
