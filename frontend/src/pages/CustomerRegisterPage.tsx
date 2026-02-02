@@ -13,16 +13,36 @@ const CustomerRegisterPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [firstNameError, setFirstNameError] = useState("");
+  const [lastNameError, setLastNameError] = useState("");
+
+  const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
+  
+    const pErr = validatePassword(password);
+    setPasswordError(pErr);
+    if (pErr) return;
+  
+    const cErr = confirmPassword && confirmPassword !== password ? "Passwords do not match." : "";
+    setConfirmError(cErr);
+    if (cErr) return;
+  
+    const fnErr = validateName(firstName, "First name");
+    const lnErr = validateName(lastName, "Last name");
+    setFirstNameError(fnErr);
+    setLastNameError(lnErr);
+    if (fnErr || lnErr) return;
+  
+    const eErr = validateEmail(email);
+    setEmailError(eErr);
+    if (eErr) return;
+  
     try {
       await register({
         email,
@@ -31,13 +51,36 @@ const CustomerRegisterPage: React.FC = () => {
         lastName,
         role: "customer",
       });
-      // after successful registration go to customer dashboard
       navigate("/customer/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     }
   };
+  
 
+  const validateEmail = (value: string) => {
+    if (!value) return "Email is required.";
+    // simple email check (good enough for frontend)
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    return ok ? "" : "Please enter a valid email address.";
+  };
+
+  const validatePassword = (value: string) => {
+    if (!value) return "Password is required.";
+    if (!passwordPolicy.test(value))
+      return "Min 8 chars + 1 uppercase + 1 lowercase + 1 number.";
+    return "";
+  };
+  
+  const validateName = (value: string, label: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return `${label} is required.`;
+    // letters (incl. accents) + space + apostrophe + hyphen
+    const ok = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(trimmed);
+    return ok ? "" : `${label} should not include numbers or special characters.`;
+  };
+  
+  
   return (
     <div className="auth-page-root">
       <Navbar />
@@ -60,9 +103,15 @@ const CustomerRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="Your first name"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFirstName(v);
+                  setFirstNameError(validateName(v, "First name"));
+                  setError("");
+                }}
                 required
               />
+              {firstNameError && <p className="auth-field-error">{firstNameError}</p>}
             </div>
 
             <div className="auth-field">
@@ -75,9 +124,15 @@ const CustomerRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="Your last name"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setLastName(v);
+                  setLastNameError(validateName(v, "Last name"));
+                  setError("");
+                }}
                 required
               />
+              {lastNameError && <p className="auth-field-error">{lastNameError}</p>}
             </div>
 
             <div className="auth-field">
@@ -90,9 +145,15 @@ const CustomerRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEmail(v);
+                  setEmailError(validateEmail(v));
+                  setError("");
+                }}
                 required
               />
+              {emailError && <p className="auth-field-error">{emailError}</p>}
             </div>
 
             <div className="auth-field">
@@ -105,9 +166,15 @@ const CustomerRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPassword(v);
+                  setPasswordError(validatePassword(v));
+                  setError("")
+                }}                
                 required
               />
+              {passwordError && <p className="auth-field-error">{passwordError}</p>}
             </div>
 
             <div className="auth-field">
@@ -120,9 +187,15 @@ const CustomerRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="••••••••"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setConfirmPassword(v);
+                  setConfirmError(v && v !== password ? "Passwords do not match." : "");
+                  setError("")
+                }}                
                 required
               />
+              {confirmError && <p className="auth-field-error">{confirmError}</p>}
             </div>
 
             {error && <p className="auth-error">{error}</p>}
