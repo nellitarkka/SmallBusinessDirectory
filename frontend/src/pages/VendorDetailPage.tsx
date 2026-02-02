@@ -9,45 +9,69 @@ import { useMessages } from "../data/MessagesStore";
 import { useAuth } from "../auth/AuthContext";
 import "./VendorDetailPage.css";
 
+const CUSTOMER_SIGNUP_PATH = "/signup/customer";
+
 const VendorDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const { toggleFavorite, isFavorite } = useFavorites();
   const { listings } = usePublicListings();
   const { sendMessage, isLoading: isMessaging } = useMessages();
   const { user } = useAuth();
 
   const [loadedVendor, setLoadedVendor] = useState<Vendor | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
   const [messageSubject, setMessageSubject] = useState("");
   const [messageBody, setMessageBody] = useState("");
   const [messageStatus, setMessageStatus] = useState<string | null>(null);
 
-  // Try to find the vendor from already-loaded public listings
+  const homePath =
+    user?.role === "customer"
+      ? "/customer/dashboard"
+      : user?.role === "vendor"
+      ? "/vendor"
+      : user?.role === "admin"
+      ? "/admin"
+      : "/";
+
   const vendorFromCache = useMemo(() => {
     if (!id) return undefined;
     return listings.find((v) => String(v.id) === String(id));
   }, [listings, id]);
 
-  // If not found in cache, fetch from backend directly
   useEffect(() => {
     let ignore = false;
+
     const fetchOne = async () => {
+      if (!id) {
+        setLoadError("Invalid vendor id.");
+        return;
+      }
+
       if (vendorFromCache) {
         setLoadedVendor(vendorFromCache);
         return;
       }
-      if (!id) return;
+
       setIsLoading(true);
       setLoadError(null);
+
       try {
         const res = await listingsAPI.getById(id);
+
         if (res.status === "success") {
           const listing = res.data.listing;
-          // Align with public_listings_view mapping
+
           const img = listing.image_url || listing.imageUrl;
-          const imageUrl = img ? (String(img).startsWith('/') ? `${API_ORIGIN}${img}` : img) : undefined;
+          const imageUrl = img
+            ? String(img).startsWith("/")
+              ? `${API_ORIGIN}${img}`
+              : img
+            : undefined;
+
           const mapped: Vendor = {
             id: listing.listing_id ?? listing.id,
             name: listing.business_name ?? listing.title ?? listing.name,
@@ -61,33 +85,38 @@ const VendorDetailPage: React.FC = () => {
             vendorUserId: listing.vendor_user_id,
             status: "approved",
           };
+
           if (!ignore) setLoadedVendor(mapped);
-        } else if (!ignore) {
-          setLoadError("Failed to load vendor");
+        } else {
+          if (!ignore) setLoadError("This vendor could not be found or is not available.");
         }
       } catch (e: any) {
-        if (!ignore) setLoadError(e?.message || "Failed to load vendor");
+        if (!ignore) setLoadError(e?.message || "This vendor could not be found or is not available.");
       } finally {
         if (!ignore) setIsLoading(false);
       }
     };
+
     fetchOne();
     return () => {
       ignore = true;
     };
   }, [id, vendorFromCache]);
 
-  const vendor = loadedVendor ?? vendorFromCache ?? undefined;
+  const vendor = loadedVendor ?? vendorFromCache;
 
   const formattedLocation = useMemo(() => {
     if (!vendor?.location) return "";
     const parts = vendor.location
       .split(/[,|]/)
-      .map((part) => part.trim())
+      .map((p) => p.trim())
       .filter(Boolean);
-    const uniqueParts = Array.from(new Set(parts));
-    return uniqueParts.join(" • ");
+    return Array.from(new Set(parts)).join(" • ");
   }, [vendor?.location]);
+
+  const handleBackSafe = () => {
+    navigate(homePath);
+  };
 
   if (isLoading) {
     return (
@@ -108,10 +137,7 @@ const VendorDetailPage: React.FC = () => {
           <p className="vendor-detail-error">
             {loadError || "This vendor could not be found or is not available."}
           </p>
-          <button
-            className="vendor-detail-back-btn"
-            onClick={() => navigate(-1)}
-          >
+          <button className="vendor-detail-back-btn" onClick={handleBackSafe}>
             Go back
           </button>
         </main>
@@ -151,13 +177,27 @@ const VendorDetailPage: React.FC = () => {
         alert(url);
       }
     } catch {
-      // ignore if user cancels
+      // ignore cancel
     }
   };
 
+  // ✅ Option B: Save requires login (customer)
+  const handleToggleFavorite = () => {
+    if (!user) {
+      navigate(CUSTOMER_SIGNUP_PATH);
+      return;
+    }
+    toggleFavorite(vendor.id);
+  };
+
+  // ✅ Option B: Send message requires customer login
   const handleSendMessage = async () => {
     if (!user) {
-      setMessageStatus("Please log in to send a message.");
+      navigate(CUSTOMER_SIGNUP_PATH);
+      return;
+    }
+    if (user.role !== "customer") {
+      setMessageStatus("Only customers can send messages.");
       return;
     }
     if (!vendor.vendorUserId) {
@@ -190,53 +230,43 @@ const VendorDetailPage: React.FC = () => {
       <Navbar />
 
       <main className="vendor-detail-main">
-        <button
-          className="vendor-detail-back-link"
-          onClick={() => navigate(-1)}
-        >
-          ← Back to vendors
+        <button className="vendor-detail-back-link" onClick={handleBackSafe}>
+          ← Back
         </button>
 
         <section className="vendor-detail-card">
           {vendor.imageUrl && (
-            <div style={{ width: '100%', marginBottom: '1rem' }}>
-              <img 
-                src={vendor.imageUrl} 
-                alt={vendor.name} 
-                style={{ 
-                  width: '100%', 
-                  height: 'auto',
-                  maxHeight: '400px', 
-                  objectFit: 'cover', 
-                  borderRadius: '8px',
-                  display: 'block'
-                }} 
+            <div style={{ width: "100%", marginBottom: "1rem" }}>
+              <img
+                src={vendor.imageUrl}
+                alt={vendor.name}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  maxHeight: "400px",
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                  display: "block",
+                }}
               />
             </div>
           )}
+
           <header className="vendor-detail-header">
             <div>
               <h1>{vendor.name}</h1>
+
               <div className="vendor-detail-tags">
                 {vendor.category && (
                   <span className="vendor-detail-tag">{vendor.category}</span>
                 )}
+
                 {formattedLocation && (
                   <span className="vendor-detail-tag vendor-detail-tag--location">
-                    <svg
-                      aria-hidden="true"
-                      focusable="false"
-                      viewBox="0 0 24 24"
-                      className="vendor-detail-icon"
-                    >
-                      <path
-                        d="M12 2.75a6.25 6.25 0 0 0-6.25 6.25c0 4.01 3.58 7.54 5.73 9.38a2 2 0 0 0 2.54 0c2.15-1.84 5.73-5.37 5.73-9.38A6.25 6.25 0 0 0 12 2.75Zm0 8.5a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5Z"
-                        fill="currentColor"
-                      />
-                    </svg>
                     {formattedLocation}
                   </span>
                 )}
+
                 {vendor.openingHours && (
                   <span className="vendor-detail-tag vendor-detail-tag--muted">
                     {vendor.openingHours}
@@ -252,7 +282,7 @@ const VendorDetailPage: React.FC = () => {
                   ? "vendor-detail-fav-btn vendor-detail-fav-btn--active"
                   : "vendor-detail-fav-btn"
               }
-              onClick={() => toggleFavorite(vendor.id)}
+              onClick={handleToggleFavorite}
             >
               {favorite ? "♥ Saved" : "♡ Save"}
             </button>
@@ -265,8 +295,7 @@ const VendorDetailPage: React.FC = () => {
           <div className="vendor-detail-extra">
             <h2>Contact</h2>
             <p>
-              You can reach <strong>{vendor.name}</strong> using the options
-              below.
+              You can reach <strong>{vendor.name}</strong> using the options below.
             </p>
 
             <div className="vendor-detail-contact">
@@ -276,22 +305,17 @@ const VendorDetailPage: React.FC = () => {
               >
                 Email
               </button>
-              <button
-                className="vendor-detail-btn"
-                onClick={handleCallVendor}
-              >
+              <button className="vendor-detail-btn" onClick={handleCallVendor}>
                 Call
               </button>
-              <button
-                className="vendor-detail-btn"
-                onClick={handleShare}
-              >
+              <button className="vendor-detail-btn" onClick={handleShare}>
                 Share
               </button>
             </div>
 
             <div className="vendor-detail-message-box">
               <h3>Send a message</h3>
+
               <input
                 type="text"
                 className="vendor-detail-input"
@@ -299,6 +323,7 @@ const VendorDetailPage: React.FC = () => {
                 value={messageSubject}
                 onChange={(e) => setMessageSubject(e.target.value)}
               />
+
               <textarea
                 className="vendor-detail-textarea"
                 placeholder="Write your message to the vendor"
@@ -306,6 +331,7 @@ const VendorDetailPage: React.FC = () => {
                 value={messageBody}
                 onChange={(e) => setMessageBody(e.target.value)}
               />
+
               <button
                 className="vendor-detail-btn vendor-detail-btn--primary"
                 onClick={handleSendMessage}
@@ -313,9 +339,8 @@ const VendorDetailPage: React.FC = () => {
               >
                 {isMessaging ? "Sending…" : "Send Message"}
               </button>
-              {messageStatus && (
-                <p className="vendor-detail-status">{messageStatus}</p>
-              )}
+
+              {messageStatus && <p className="vendor-detail-status">{messageStatus}</p>}
             </div>
           </div>
         </section>

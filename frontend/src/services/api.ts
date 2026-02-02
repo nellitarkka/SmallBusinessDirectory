@@ -82,12 +82,25 @@ export const authAPI = {
     // Save token to localStorage
     if (data.status === 'success' && data.data.token) {
       localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
     }
     
     return data;
   },
 
+  updateProfile: async (payload: { name: string }) => {
+    return await apiCall("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+  
+  changePassword: async (payload: { currentPassword: string; newPassword: string }) => {
+    return await apiCall("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  
   login: async (email: string, password: string, role?: string) => {
     const data = await apiCall('/auth/login', {
       method: 'POST',
@@ -97,7 +110,6 @@ export const authAPI = {
     // Save token to localStorage
     if (data.status === 'success' && data.data.token) {
       localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
     }
     
     return data;
@@ -112,6 +124,7 @@ export const authAPI = {
       method: 'GET',
     });
   },
+  
 
   logout: () => {
     localStorage.removeItem('token');

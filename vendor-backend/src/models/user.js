@@ -32,19 +32,66 @@ const User = {
     }
   },
 
-  async findById(id) {
+  async updateProfile(userId, { firstName, lastName }) {
     try {
       const query = `
-        SELECT id, email, role, first_name, last_name, created_at, updated_at 
-        FROM users 
-        WHERE id = $1
+        UPDATE users
+        SET first_name = $1,
+            last_name = $2,
+            updated_at = NOW()
+        WHERE id = $3
+        RETURNING id, email, role, first_name, last_name, created_at, updated_at
       `;
+      const result = await pool.query(query, [firstName, lastName, userId]);
+      return result.rows[0];
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  async updatePassword(userId, newPassword) {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+      const query = `
+        UPDATE users
+        SET password_hash = $1,
+            updated_at = NOW()
+        WHERE id = $2
+        RETURNING id
+      `;
+      const result = await pool.query(query, [hashedPassword, userId]);
+      return result.rows[0];
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+
+
+  async findById(id, options = {}) {
+    try {
+      const includePasswordHash = options.includePasswordHash === true;
+  
+      const query = includePasswordHash
+        ? `
+          SELECT id, email, role, first_name, last_name, password_hash, created_at, updated_at 
+          FROM users 
+          WHERE id = $1
+        `
+        : `
+          SELECT id, email, role, first_name, last_name, created_at, updated_at 
+          FROM users 
+          WHERE id = $1
+        `;
+  
       const result = await pool.query(query, [id]);
       return result.rows[0];
     } catch (error) {
       throw error;
     }
   },
+  
 
   async verifyPassword(plainPassword, hashedPassword) {
     return bcrypt.compare(plainPassword, hashedPassword);

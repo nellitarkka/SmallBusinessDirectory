@@ -138,10 +138,113 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'currentPassword and newPassword are required'
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'New password must be at least 8 characters long'
+      });
+    }
+
+    const user = await User.findById(req.user.userId, { includePasswordHash: true });
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
+    if (!user.password_hash) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Password hash missing for user'
+      });
+    }
+    
+
+    const ok = await User.verifyPassword(currentPassword, user.password_hash);
+    if (!ok) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Current password is incorrect'
+      });
+    }
+
+    await User.updatePassword(req.user.userId, newPassword);
+
+    return res.json({
+      status: 'success',
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+};
+
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Name is required'
+      });
+    }
+
+    const trimmed = name.trim();
+    const parts = trimmed.split(/\s+/);
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(' ') || null;
+
+    // Update DB
+    const updatedUser = await User.updateProfile(req.user.userId, {
+      firstName,
+      lastName
+    });
+
+    return res.json({
+      status: 'success',
+      message: 'Profile updated successfully',
+      data: {
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          firstName: updatedUser.first_name,
+          lastName: updatedUser.last_name
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+};
+
+
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
-    
+
     if (!user) {
       return res.status(404).json({ 
         status: 'error', 
