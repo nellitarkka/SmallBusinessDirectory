@@ -120,16 +120,16 @@ const CustomerDashboardPage: React.FC = () => {
                 const favorite = isFavorite(vendor.id);
 
                 return (
-                  <article key={vendor.id} className="customer-vendor-card">
-                    <div className="customer-vendor-card-header">
-                      <h2 className="customer-vendor-title">{vendor.name}</h2>
+                  <article key={vendor.id} className="vendor-card">
+                    <div className="vendor-card-header">
+                      <h2 className="vendor-card-title">{vendor.name}</h2>
 
                       <button
                         type="button"
                         className={
                           favorite
-                            ? "customer-favorite-btn customer-favorite-btn--active"
-                            : "customer-favorite-btn"
+                            ? "vendor-save-btn vendor-save-btn--active"
+                            : "vendor-save-btn"
                         }
                         onClick={() => toggleFavorite(vendor.id)}
                       >
@@ -138,22 +138,19 @@ const CustomerDashboardPage: React.FC = () => {
                     </div>
 
                     {vendor.category && (
-                      <p className="customer-vendor-category">
-                        {vendor.category}
-                      </p>
+                      <p className="vendor-card-category">{vendor.category}</p>
                     )}
+
                     {vendor.location && (
-                      <p className="customer-vendor-location">
-                        {vendor.location}
-                      </p>
+                      <p className="vendor-card-location">{vendor.location}</p>
                     )}
+
                     {vendor.openingHours && (
-                      <p className="customer-vendor-location">
-                        {vendor.location} · {vendor.openingHours}
-                      </p>
+                      <p className="vendor-card-hours">{vendor.openingHours}</p>
                     )}
+
                     {vendor.description && (
-                      <p className="customer-vendor-description">
+                      <p className="vendor-card-description">
                         {vendor.description.length > 140
                           ? vendor.description.slice(0, 140) + "..."
                           : vendor.description}
@@ -161,19 +158,16 @@ const CustomerDashboardPage: React.FC = () => {
                     )}
 
                     <button
-                      className="customer-vendor-toggle-btn"
+                      className="vendor-card-btn"
                       onClick={() => handleToggleExpand(vendor.id)}
                     >
-                      {isExpanded
-                        ? "Hide contact options"
-                        : "View contact options"}
+                      {isExpanded ? "Hide contact options" : "View contact options"}
                     </button>
 
                     {isExpanded && (
                       <div className="customer-vendor-contact">
-                        <p className="customer-contact-title">
-                          Contact {vendor.name}
-                        </p>
+                        <p className="customer-contact-title">Contact {vendor.name}</p>
+
                         <textarea
                           className="customer-message-textarea"
                           placeholder="Write a message to the vendor..."
@@ -181,6 +175,7 @@ const CustomerDashboardPage: React.FC = () => {
                           onChange={(e) => setMessageText(e.target.value)}
                           rows={3}
                         />
+
                         <div className="customer-contact-buttons">
                           <button
                             className="contact-btn contact-btn--primary"
@@ -204,6 +199,7 @@ const CustomerDashboardPage: React.FC = () => {
                       </div>
                     )}
                   </article>
+
                 );
               })}
             </div>

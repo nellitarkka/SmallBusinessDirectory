@@ -56,7 +56,7 @@ const LandingPage: React.FC = () => {
     return combined.includes(normalizedSearch);
   });
 
-  const sampleVendors = filteredVendors.slice(0, 6);
+  const sampleVendors = filteredVendors;
 
   // --- actions ---
 
