@@ -13,6 +13,7 @@ import VendorDetailPage from "./pages/VendorDetailPage";
 import CustomerMessagesPage from "./pages/CustomerMessagesPage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
 import VendorInboxPage from "./pages/VendorInboxPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 function App() {
   return (
@@ -27,6 +28,9 @@ function App() {
       {/* signup routes */}
       <Route path="/signup/customer" element={<CustomerRegisterPage />} />
       <Route path="/signup/vendor" element={<VendorRegisterPage />} />
+
+      {/* email verification */}
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
       {/* dashboards */}
       <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

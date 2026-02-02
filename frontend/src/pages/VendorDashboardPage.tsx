@@ -27,6 +27,7 @@ interface VendorProfile {
   vat_number?: string;
   city?: string;
   is_verified: boolean;
+  is_email_verified?: boolean;
 }
 
 const VendorDashboardPage: React.FC = () => {
@@ -280,7 +281,7 @@ const VendorDashboardPage: React.FC = () => {
     const listing = selectedListingId ? listings.find(l => l.id === selectedListingId) : null;
     const statusBefore = listing?.status;
   
-    if (vendorProfile && !vendorProfile.is_verified) {
+    if (vendorProfile && vendorProfile.is_email_verified === false) {
       setSubmitError("You must be verified before submitting a listing for review.");
       return;
     }
@@ -324,7 +325,7 @@ const VendorDashboardPage: React.FC = () => {
     const canSubmitForReview =
       currentStatus === "draft" || currentStatus === "rejected";
     
-    const isVerified = vendorProfile?.is_verified !== false;
+    const isVerified = vendorProfile?.is_email_verified !== false;
 
 
   return (
@@ -340,7 +341,7 @@ const VendorDashboardPage: React.FC = () => {
           </p>
         </header>
 
-        {vendorProfile && !vendorProfile.is_verified && (
+        {vendorProfile && vendorProfile.is_email_verified === false && (
           <div
             style={{
               maxWidth: "1200px",

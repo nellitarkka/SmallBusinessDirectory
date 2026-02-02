@@ -68,7 +68,7 @@ exports.register = async (req, res) => {
           role: user.role,
           firstName: user.first_name,
           lastName: user.last_name,
-          emailVerified: user.email_verified
+          emailVerified: user.is_email_verified
         },
         token
       }

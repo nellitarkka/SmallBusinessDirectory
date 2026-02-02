@@ -107,6 +107,12 @@ export const authAPI = {
     return await apiCall('/auth/profile');
   },
 
+  verifyEmail: async (token: string) => {
+    return await apiCall(`/auth/verify-email/${token}`, {
+      method: 'GET',
+    });
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -264,3 +270,6 @@ export const messagesAPI = {
   delete: (messageId: number) => apiCall(`/messages/${messageId}`, { method: 'DELETE' }),
   getUnreadCount: () => apiCall('/messages/unread-count'),
 };
+
+// ==================== EMAIL VERIFICATION ====================
+export const verifyEmail = (token: string) => authAPI.verifyEmail(token);

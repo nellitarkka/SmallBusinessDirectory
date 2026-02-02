@@ -64,7 +64,7 @@ User.createVerificationToken = async (userId) => {
       SET email_verification_token = $1, 
           email_verification_expires = $2 
       WHERE id = $3 
-      RETURNING id, email, role, first_name, last_name, email_verified, email_verification_token, email_verification_expires
+      RETURNING id, email, role, first_name, last_name, is_email_verified, email_verification_token, email_verification_expires
     `;
     const result = await pool.query(query, [token, expiresAt, userId]);
     return { token, user: result.rows[0] };
@@ -77,12 +77,12 @@ User.verifyEmail = async (token) => {
   try {
     const query = `
       UPDATE users 
-      SET email_verified = true, 
+      SET is_email_verified = true, 
           email_verification_token = NULL,
           email_verification_expires = NULL
       WHERE email_verification_token = $1 
         AND email_verification_expires > NOW()
-      RETURNING id, email, role, first_name, last_name, email_verified
+      RETURNING id, email, role, first_name, last_name, is_email_verified
     `;
     const result = await pool.query(query, [token]);
     return result.rows[0];
@@ -95,7 +95,7 @@ User.resendVerificationEmail = async (email) => {
   try {
     const user = await User.findByEmail(email);
     if (!user) return null;
-    if (user.email_verified) return { alreadyVerified: true };
+    if (user.is_email_verified) return { alreadyVerified: true };
 
     // Reuse existing valid token if it was created recently (within 5 minutes)
     if (user.email_verification_token && user.email_verification_expires) {
