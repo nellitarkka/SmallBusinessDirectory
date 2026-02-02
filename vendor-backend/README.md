@@ -48,6 +48,10 @@ PORT=3000
 DATABASE_URL=your_postgresql_connection_string
 JWT_SECRET=your_jwt_secret_key
 NODE_ENV=development
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-specific-password
 ```
 
 4. **Start the development server**
