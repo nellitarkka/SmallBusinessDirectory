@@ -2,98 +2,205 @@
 import { type FormEvent, useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import "./VendorDashboardPage.css";
-import { useVendors } from "../data/VendorStore";
-import type { Vendor } from "../data/vendors";
-import { useMessages } from "../data/MessagesStore";
+import { listingsAPI, vendorAPI, API_ORIGIN } from "../services/api";
 import { useAuth } from "../auth/AuthContext";
 
+interface Listing {
+  id: number;
+  vendor_id: number;
+  title: string;
+  description: string;
+  city: string;
+  contact_email?: string;
+  contact_phone?: string;
+  status: string;
+  opening_hours?: string;
+  image_url?: string;
+  rejection_reason?: string;
+  rejectionReason?: string;
+}
+
+interface VendorProfile {
+  id: number;
+  user_id: number;
+  business_name: string;
+  vat_number?: string;
+  city?: string;
+  is_verified: boolean;
+  is_email_verified?: boolean;
+}
+
 const VendorDashboardPage: React.FC = () => {
-  const { vendors, updateVendor, updateVendorStatus, createListing } = useVendors();
-  const { messages, addReply } = useMessages();
   const { user } = useAuth();
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
 
-  // vendors that belong to the logged-in vendor (by email)
-  const myVendors = vendors.filter(
-    (v) => user?.role === "vendor" && v.email === user.email
-  );
+  const MAX_TITLE = 80;
+  const MAX_CITY = 60;
+  const MAX_DESC = 600;
+  const MAX_OPENING = 120;
+  const MAX_EMAIL = 120;
+  const MAX_PHONE = 40;
 
-  const fallbackVendor: Vendor = {
-    id: undefined as any,
-    name: "Your Business Name",
-    category: "",
-    location: "",
-    description: "",
-    email: user?.email || "",
-    phone: "",
-    status: "draft",
-    openingHours: "",
+  type FieldErrors = Partial<Record<
+    "title" | "city" | "description" | "contactEmail" | "contactPhone" | "openingHours",
+    string
+  >>;
+
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [city, setCity] = useState("");
+  const [contactEmail, setContactEmail] = useState(user?.email || "");
+  const [contactPhone, setContactPhone] = useState("");
+  const [openingHours, setOpeningHours] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageStatus, setImageStatus] = useState<string>("");
+
+  // Fetch vendor profile and listings on mount
+  useEffect(() => { 
+    const initializeData = async () => {
+      await fetchVendorProfile();
+      await fetchMyListings();
+    };
+    initializeData();
+  }, []);
+
+  const fetchVendorProfile = async () => {
+    try {
+      const response = await vendorAPI.getProfile();
+      if (response.status === 'success') {
+        const profile = response.data.vendor;
+        setVendorProfile(profile);
+        // Pre-fill form with vendor data
+        if (!title && profile.business_name) {
+          setTitle(profile.business_name);
+        }
+        if (!city && profile.city) {
+          setCity(profile.city);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching vendor profile:', err);
+    }
   };
 
-  // allow multiple listings via dropdown later if you want
-  const [selectedVendorId, setSelectedVendorId] = useState<Vendor["id"] | null>(null);
+  const fetchMyListings = async () => {
+    setIsLoading(true);
+    try {
+      const response = await listingsAPI.getMine();
+      if (response.status === 'success') {
+        setListings(response.data.listings);
+      }
+    } catch (err) {
+      console.error('Error fetching listings:', err);
+      setSubmitError(err instanceof Error ? err.message : 'Failed to load listings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadListingIntoForm = (listing: Listing) => {
+    setTitle(listing.title);
+    setDescription(listing.description);
+    setCity(listing.city);
+    setContactEmail(listing.contact_email || user?.email || "");
+    setContactPhone(listing.contact_phone || "");
+    setOpeningHours(listing.opening_hours || "");
+  };
+
+  // Update form when selected listing changes
+  useEffect(() => {
+    setStatusMessage("");
+    setSubmitError("");
+    setFieldErrors({});
+    setImageFile(null);
+    setImageStatus("");
+
+    if (selectedListingId) {
+      const listing = listings.find(l => l.id === selectedListingId);
+      if (listing) {
+        console.log('Loading listing into form:', listing);
+        loadListingIntoForm(listing);
+      }
+    }
+  }, [selectedListingId, listings]);
+
+
+  const validateForm = (): FieldErrors => {
+    const errors: FieldErrors = {};
   
-  // Update selectedVendorId when myVendors changes
-  useEffect(() => {
-    if (myVendors.length > 0 && selectedVendorId === null) {
-      setSelectedVendorId(myVendors[0].id);
-    }
-  }, [myVendors, selectedVendorId]);
-
-  const currentVendor =
-    selectedVendorId ? (myVendors.find((v) => v.id === selectedVendorId) || fallbackVendor) : fallbackVendor;
-
-  // form state
-  const [name, setName] = useState(currentVendor.name);
-  const [category, setCategory] = useState(currentVendor.category || "");
-  const [location, setLocation] = useState(currentVendor.location || "");
-  const [description, setDescription] = useState(
-    currentVendor.description || ""
-  );
-  const [email, setEmail] = useState(user?.email || currentVendor.email || ""); // Initialize with user's email
-  const [phone, setPhone] = useState(currentVendor.phone || "");
-  const [openingHours, setOpeningHours] = useState(
-    currentVendor.openingHours || ""
-  );
-  const [statusMessage, setStatusMessage] = useState("");
-  const [images, setImages] = useState<string[]>([]);
-
-  // reply drafts for each message
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
-
-  // Update form when selected vendor changes (not when vendor data updates)
-  useEffect(() => {
-    if (selectedVendorId && currentVendor.id !== undefined) {
-      setName(currentVendor.name);
-      setCategory(currentVendor.category || "");
-      setLocation(currentVendor.location || "");
-      setDescription(currentVendor.description || "");
-      setEmail(currentVendor.email || "");
-      setPhone(currentVendor.phone || "");
-      setOpeningHours(currentVendor.openingHours || "");
-    }
-  }, [selectedVendorId]);
+    const t = title.trim();
+    const c = city.trim();
+    const d = description.trim();
+    const e = contactEmail.trim();
+    const p = contactPhone.trim();
+    const oh = openingHours.trim();
+  
+    if (!t) errors.title = "Business title is required.";
+    else if (t.length > MAX_TITLE) errors.title = `Max ${MAX_TITLE} characters.`;
+  
+    if (!c) errors.city = "City is required.";
+    else if (c.length > MAX_CITY) errors.city = `Max ${MAX_CITY} characters.`;
+  
+    if (!d) errors.description = "Description is required.";
+    else if (d.length > MAX_DESC) errors.description = `Max ${MAX_DESC} characters.`;
+  
+    if (e && e.length > MAX_EMAIL) errors.contactEmail = `Max ${MAX_EMAIL} characters.`;
+    // optional: basic email check only if non-empty
+    if (e && !/^\S+@\S+\.\S+$/.test(e)) errors.contactEmail = "Invalid email format.";
+  
+    if (p && p.length > MAX_PHONE) errors.contactPhone = `Max ${MAX_PHONE} characters.`;
+    if (oh && oh.length > MAX_OPENING) errors.openingHours = `Max ${MAX_OPENING} characters.`;
+  
+    return errors;
+  };
+  
 
   const handleCreateListing = async () => {
     setSubmitError("");
+    setStatusMessage("");
+
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setSubmitError("Please fix the highlighted fields.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Use the user's actual email, not form input
-      const newVendor = await createListing({
-        name,
-        category,
-        location,
+      const response = await listingsAPI.create({
+        title,
         description,
-        email: user?.email || email, // Use authenticated user's email
-        phone,
+        city,
+        contactPhone,
+        contactEmail: contactEmail || user?.email || "",
         openingHours,
       });
-      setSelectedVendorId(newVendor.id);
-      setShowCreateForm(false);
-      setStatusMessage("Listing created successfully!");
+      
+      if (response.status === 'success') {
+        setShowCreateForm(false);
+        setStatusMessage("Listing created successfully!");
+        await fetchMyListings(); // Refresh listings
+        // Clear form
+        setTitle("");
+        setDescription("");
+        setCity("");
+        setContactPhone("");
+        setOpeningHours("");
+        setFieldErrors({});
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to create listing";
       setSubmitError(errorMsg);
@@ -102,96 +209,124 @@ const VendorDashboardPage: React.FC = () => {
     }
   };
 
-  // messages for this vendor
-  const vendorMessages = messages.filter(
-    (m) => m.vendorId === currentVendor.id
-  );
-  const totalMessages = vendorMessages.length;
-  const repliedMessages = vendorMessages.filter((m) => m.vendorReply).length;
-
-  const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const newUrls: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const url = URL.createObjectURL(file);
-      newUrls.push(url);
-    }
-
-    setImages((prev) => [...prev, ...newUrls]);
-    e.target.value = "";
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setStatusMessage("");
     setSubmitError("");
     setIsSubmitting(true);
 
-    try {
-      const updatedVendor: Vendor = {
-        ...currentVendor,
-        name,
-        category,
-        location,
-        description,
-        email,
-        phone,
-        openingHours,
-      };
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setSubmitError("Please fix the highlighted fields.");
+      setIsSubmitting(false);
+      return;
+    }
 
-      await updateVendor(updatedVendor);
-      setStatusMessage("Your vendor profile has been saved successfully.");
+
+    if (!selectedListingId) {
+      setSubmitError("No listing selected");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await listingsAPI.update(selectedListingId, {
+        title,
+        description,
+        city,
+        contactPhone,
+        contactEmail,
+        openingHours,
+      });
+      
+      if (response.status === 'success') {
+        setStatusMessage("Listing updated successfully!");
+        await fetchMyListings(); // Refresh listings
+      }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to save profile";
+      const errorMsg = err instanceof Error ? err.message : "Failed to update listing";
       setSubmitError(errorMsg);
       setStatusMessage("");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedListingId || !imageFile) {
+      setImageStatus("No image selected");
+      return;
+    }
+    setImageStatus("Uploading...");
+    try {
+      const res = await listingsAPI.uploadImage(selectedListingId, imageFile);
+      if (res.status === 'success') {
+        setImageStatus("Image updated");
+        await fetchMyListings();
+      } else {
+        setImageStatus(res.message || "Failed to upload");
+      }
+    } catch (e: any) {
+      setImageStatus(e?.message || "Failed to upload");
+    } finally {
+      setTimeout(() => setImageStatus(""), 2000);
     }
   };
 
   const handleSubmitForReview = async () => {
     setStatusMessage("");
     setSubmitError("");
-    setIsSubmitting(true);
+  
+    const listing = selectedListingId ? listings.find(l => l.id === selectedListingId) : null;
+    const statusBefore = listing?.status;
+  
+    if (vendorProfile && vendorProfile.is_email_verified === false) {
+      setSubmitError("You must be verified before submitting a listing for review.");
+      return;
+    }
+  
+    if (!selectedListingId) return;
 
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setSubmitError("Please fix the highlighted fields before submitting for review.");
+      return;
+    }
+
+  
+    setIsSubmitting(true);
     try {
-      await updateVendorStatus(currentVendor.id, "submitted");
-      setStatusMessage("Your listing has been submitted for review.");
+      const response = await listingsAPI.update(selectedListingId, { status: "submitted" });
+  
+      if (response.status === "success") {
+        setStatusMessage(
+          statusBefore === "rejected"
+            ? "Listing resubmitted for admin review!"
+            : "Listing submitted for admin review!"
+        );
+        await fetchMyListings();
+      }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to submit for review";
-      setSubmitError(errorMsg);
-      setStatusMessage("");
+      setSubmitError(err instanceof Error ? err.message : "Failed to submit for review");
     } finally {
       setIsSubmitting(false);
     }
   };
+  
 
-  const handleChangeReply = (id: string | number, text: string) => {
-    setReplyDrafts((prev) => ({ ...prev, [id]: text }));
-  };
+    const currentListing = selectedListingId
+      ? listings.find((l) => l.id === selectedListingId)
+      : null;
 
-  const handleSendReply = async (id: string | number) => {
-    const text = replyDrafts[id]?.trim();
-    if (!text) {
-      alert("Please type a reply before sending.");
-      return;
-    }
-    try {
-      await addReply(id, text);
-      setReplyDrafts((prev) => ({ ...prev, [id]: "" }));
-      alert("Reply sent successfully.");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to send reply");
-    }
-  };
+    const currentStatus = currentListing?.status;
+
+    const canSubmitForReview =
+      currentStatus === "draft" || currentStatus === "rejected";
+    
+    const isVerified = vendorProfile?.is_email_verified !== false;
+
 
   return (
     <div className="vendor-page-root">
@@ -201,20 +336,46 @@ const VendorDashboardPage: React.FC = () => {
         <header className="vendor-header">
           <h1>Vendor Dashboard</h1>
           <p>
-            Manage your business listing so customers can find and contact you
+            Manage your business listings so customers can find and contact you
             easily.
           </p>
         </header>
 
+        {vendorProfile && vendorProfile.is_email_verified === false && (
+          <div
+            style={{
+              maxWidth: "1200px",
+              margin: "0 auto 1rem auto",
+              padding: "0.75rem 1rem",
+              borderRadius: 8,
+              background: "#f8d7da",
+              border: "1px solid #f5c6cb",
+              color: "#721c24",
+            }}
+          >
+            <strong>Account not verified.</strong> You can create and edit drafts, but you must be verified before submitting for review.
+          </div>
+        )}
+        {isLoading ? (
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <p>Loading your listings...</p>
+          </div>
+        ) : (
+        <>
         {/* Show message if vendor has no listings */}
-        {vendors.length === 0 && !showCreateForm && (
+        {listings.length === 0 && !showCreateForm && (
           <section style={{ padding: "2rem", textAlign: "center", maxWidth: "600px", margin: "2rem auto" }}>
             <h2>You don't have any listings yet</h2>
             <p>Create your first listing to get started and let customers find you.</p>
             <button
               type="button"
               className="vendor-submit-button"
-              onClick={() => setShowCreateForm(true)}
+              onClick={() => {
+                setShowCreateForm(true);
+                setFieldErrors({});
+                setSubmitError("");
+                setStatusMessage("");
+              }}              
             >
               Create Your First Listing
             </button>
@@ -222,45 +383,54 @@ const VendorDashboardPage: React.FC = () => {
         )}
 
         {/* Show create form if no listings and user clicked create */}
-        {vendors.length === 0 && showCreateForm && (
+        {listings.length === 0 && showCreateForm && (
           <section className="vendor-layout">
             <form className="vendor-form" onSubmit={(e) => { e.preventDefault(); handleCreateListing(); }}>
               <h2 className="vendor-section-title">Create Your Business Listing</h2>
               
               <div className="vendor-field">
-                <label className="vendor-label" htmlFor="vendor-name">Business name</label>
+                <label className="vendor-label" htmlFor="vendor-title">Business Title</label>
                 <input
-                  id="vendor-name"
+                  id="vendor-title"
                   type="text"
                   className="vendor-input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={title}
+                  maxLength={MAX_TITLE}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, title: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.title && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.title}
+                  </div>
+                )}
+
               </div>
 
               <div className="vendor-field">
-                <label className="vendor-label" htmlFor="vendor-category">Category</label>
+                <label className="vendor-label" htmlFor="vendor-city">City</label>
                 <input
-                  id="vendor-category"
+                  id="vendor-city"
                   type="text"
                   className="vendor-input"
-                  placeholder="Bakery, Grocery, Restaurant..."
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Luxembourg, Esch-sur-Alzette..."
+                  value={city}
+                  maxLength={MAX_CITY}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, city: undefined }));
+                  }}
+                  required
                 />
-              </div>
+                {fieldErrors.city && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.city}
+                  </div>
+                )}
 
-              <div className="vendor-field">
-                <label className="vendor-label" htmlFor="vendor-location">Location</label>
-                <input
-                  id="vendor-location"
-                  type="text"
-                  className="vendor-input"
-                  placeholder="City / Area"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
               </div>
 
               <div className="vendor-field">
@@ -270,8 +440,8 @@ const VendorDashboardPage: React.FC = () => {
                   type="email"
                   className="vendor-input"
                   placeholder="you@business.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
                 />
               </div>
 
@@ -282,8 +452,8 @@ const VendorDashboardPage: React.FC = () => {
                   type="tel"
                   className="vendor-input"
                   placeholder="+352 ..."
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
                 />
               </div>
 
@@ -307,8 +477,19 @@ const VendorDashboardPage: React.FC = () => {
                   rows={4}
                   placeholder="Describe your services and special offers..."
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={MAX_DESC}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                  }}
+                  required
                 />
+                {fieldErrors.description && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.description}
+                  </div>
+                )}
+
               </div>
 
               {submitError && (
@@ -322,7 +503,13 @@ const VendorDashboardPage: React.FC = () => {
               <button
                 type="button"
                 className="vendor-save-button"
-                onClick={() => setShowCreateForm(false)}
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setFieldErrors({});
+                  setSubmitError("");
+                  setStatusMessage("");
+                }}
+                
                 style={{ marginLeft: "1rem", backgroundColor: "#999" }}
               >
                 Cancel
@@ -332,52 +519,155 @@ const VendorDashboardPage: React.FC = () => {
         )}
 
         {/* Show edit form if vendor has listings */}
-        {vendors.length > 0 && currentVendor.id !== undefined && (
+        {listings.length > 0 && (
+        <>
+          {/* Listings Overview Table */}
+          <section style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2>My Listings</h2>
+              <button
+                type="button"
+                className="vendor-submit-button"
+                onClick={() => {
+                  setSelectedListingId(null);
+                  setShowCreateForm(true);
+                  setFieldErrors({});
+                  setSubmitError("");
+                  setStatusMessage("");
+                  setTitle(vendorProfile?.business_name || "");
+                  setCity(vendorProfile?.city || "");
+                  setDescription("");
+                  setContactPhone("");
+                  setOpeningHours("");
+                }}
+              >
+                + Create New Listing
+              </button>
+            </div>
+            
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+                <thead>
+                  <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "2px solid #dee2e6" }}>
+                    <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: 600 }}>Title</th>
+                    <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: 600 }}>City</th>
+                    <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: 600 }}>Status</th>
+                    <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: 600 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listings.map((listing) => (
+                    <tr key={listing.id} style={{ borderBottom: "1px solid #dee2e6" }}>
+                      <td style={{ padding: "0.75rem" }}>{listing.title}</td>
+                      <td style={{ padding: "0.75rem" }}>{listing.city}</td>
+                      <td style={{ padding: "0.75rem" }}>
+                        <span style={{
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: "12px",
+                          fontSize: "0.875rem",
+                          fontWeight: 500,
+                          backgroundColor: 
+                            listing.status === 'active' ? '#d4edda' :
+                            listing.status === 'submitted' ? '#fff3cd' :
+                            listing.status === 'rejected' ? '#f8d7da' :
+                            '#e2e3e5',
+                          color:
+                            listing.status === 'active' ? '#155724' :
+                            listing.status === 'submitted' ? '#856404' :
+                            listing.status === 'rejected' ? '#721c24' :
+                            '#383d41'
+                        }}>
+                          {listing.status.charAt(0).toUpperCase() + listing.status.slice(1)}
+                        </span>
+                      </td>
+                      <td style={{ padding: "0.75rem", textAlign: "center" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            console.log('Edit button clicked for listing:', listing.id);
+                            setSelectedListingId(listing.id);
+                            setShowCreateForm(false);
+                            // Scroll to edit form after React re-renders
+                            setTimeout(() => {
+                              const editSection = document.querySelector('.vendor-layout');
+                              console.log('Edit section found:', editSection);
+                              if (editSection) {
+                                const top = editSection.getBoundingClientRect().top + window.scrollY - 100;
+                                window.scrollTo({ top, behavior: 'smooth' });
+                              }
+                            }, 100);
+                          }}
+                          style={{
+                            padding: "0.375rem 0.75rem",
+                            backgroundColor: selectedListingId === listing.id ? "#007bff" : "#6c757d",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "0.875rem"
+                          }}
+                        >
+                          {selectedListingId === listing.id ? "Editing" : "Edit"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        
+          {selectedListingId && (
         <section className="vendor-layout">
           {/* LEFT: EDIT FORM */}
           <form className="vendor-form" onSubmit={handleSubmit}>
-            <h2 className="vendor-section-title">Your vendor profile</h2>
+            <h2 className="vendor-section-title">Edit Listing: {listings.find(l => l.id === selectedListingId)?.title}</h2>
 
             <div className="vendor-field">
-              <label className="vendor-label" htmlFor="vendor-name">
-                Business name
+              <label className="vendor-label" htmlFor="vendor-title">
+                Business Title
               </label>
               <input
-                id="vendor-name"
+                id="vendor-title"
                 type="text"
                 className="vendor-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={title}
+                maxLength={MAX_TITLE}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, title: undefined }));
+                }}
                 required
               />
+              {fieldErrors.title && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.title}
+                </div>
+              )}
             </div>
 
             <div className="vendor-field">
-              <label className="vendor-label" htmlFor="vendor-category">
-                Category
+              <label className="vendor-label" htmlFor="vendor-city">
+                City
               </label>
               <input
-                id="vendor-category"
+                id="vendor-city"
                 type="text"
                 className="vendor-input"
-                placeholder="Bakery, Grocery, Restaurant..."
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Luxembourg, Esch-sur-Alzette..."
+                value={city}
+                maxLength={MAX_CITY}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, city: undefined }));
+                }}
+                required
               />
-            </div>
-
-            <div className="vendor-field">
-              <label className="vendor-label" htmlFor="vendor-location">
-                Location
-              </label>
-              <input
-                id="vendor-location"
-                type="text"
-                className="vendor-input"
-                placeholder="City / Area"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
+              {fieldErrors.city && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.city}
+                </div>
+              )}
             </div>
 
             <div className="vendor-field">
@@ -389,9 +679,19 @@ const VendorDashboardPage: React.FC = () => {
                 type="email"
                 className="vendor-input"
                 placeholder="you@business.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={contactEmail}
+                maxLength={MAX_EMAIL}
+                onChange={(e) => {
+                  setContactEmail(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, contactEmail: undefined }));
+                }}
               />
+              {fieldErrors.contactEmail && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.contactEmail}
+                </div>
+              )}
+
             </div>
 
             <div className="vendor-field">
@@ -403,9 +703,19 @@ const VendorDashboardPage: React.FC = () => {
                 type="tel"
                 className="vendor-input"
                 placeholder="+352 ..."
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={contactPhone}
+                maxLength={MAX_PHONE}
+                onChange={(e) => {
+                  setContactPhone(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, contactPhone: undefined }));
+                }}
               />
+              {fieldErrors.contactPhone && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.contactPhone}
+                </div>
+              )}
+
             </div>
 
             <div className="vendor-field">
@@ -418,8 +728,18 @@ const VendorDashboardPage: React.FC = () => {
                 className="vendor-input"
                 placeholder="e.g. Mon–Fri 9:00–18:00, Sat 10:00–16:00"
                 value={openingHours}
-                onChange={(e) => setOpeningHours(e.target.value)}
+                maxLength={MAX_OPENING}
+                onChange={(e) => {
+                  setOpeningHours(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, openingHours: undefined }));
+                }}
               />
+              {fieldErrors.openingHours && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.openingHours}
+                </div>
+              )}
+
             </div>
 
             <div className="vendor-field">
@@ -432,43 +752,19 @@ const VendorDashboardPage: React.FC = () => {
                 rows={4}
                 placeholder="Describe your services and special offers..."
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                maxLength={MAX_DESC}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                }}
+                required
               />
-            </div>
-
-            {/* IMAGES SECTION */}
-            <div className="vendor-field">
-              <label className="vendor-label" htmlFor="vendor-images">
-                Store images
-              </label>
-              <input
-                id="vendor-images"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImagesChange}
-              />
-              <p className="vendor-help-text">
-                You can upload multiple images to showcase your store or
-                products.
-              </p>
-
-              {images.length > 0 && (
-                <div className="vendor-images-grid">
-                  {images.map((url, index) => (
-                    <div key={url} className="vendor-image-wrapper">
-                      <img src={url} alt={`Uploaded ${index + 1}`} />
-                      <button
-                        type="button"
-                        className="vendor-image-remove"
-                        onClick={() => handleRemoveImage(index)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+              {fieldErrors.description && (
+                <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                  {fieldErrors.description}
                 </div>
               )}
+
             </div>
 
             {statusMessage && (
@@ -479,69 +775,77 @@ const VendorDashboardPage: React.FC = () => {
               <p style={{ color: "red", marginBottom: "1rem" }}>{submitError}</p>
             )}
 
-            <button type="submit" className="vendor-save-button" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save changes"}
-            </button>
+            <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              <button type="submit" className="vendor-save-button" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </button>
+              
+              {canSubmitForReview && (
+                <button
+                  type="button"
+                  className="vendor-submit-button"
+                  onClick={handleSubmitForReview}
+                  disabled={isSubmitting || !isVerified}
+                  title={!isVerified ? "You must be verified before submitting." : ""}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit for Review"}
+                </button>
+              )}
 
-            <button
-              type="button"
-              className="vendor-submit-button"
-              onClick={handleSubmitForReview}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit for review"}
-            </button>
-
-            <p className="vendor-current-status">
-              Current status: <strong>{currentVendor.status}</strong>
-            </p>
-
-            {/* BASIC STATS */}
-            <div className="vendor-stats">
-              <h3>Message statistics</h3>
-              <p>Total messages: {totalMessages}</p>
-              <p>Replied: {repliedMessages}</p>
-              <p>Unreplied: {totalMessages - repliedMessages}</p>
             </div>
 
-            {/* MESSAGES LIST */}
-            {vendorMessages.length > 0 && (
-              <div className="vendor-messages-list">
-                <h3>Messages from customers</h3>
-                {vendorMessages.map((m) => (
-                  <div key={m.id} className="vendor-message-item">
-                    <p className="vendor-message-meta">
-                      From: {m.customerEmail || "Unknown"} ·{" "}
-                      {new Date(m.createdAt).toLocaleString()}
+            {listings.find(l => l.id === selectedListingId) && (
+              <div style={{ 
+                marginTop: "1rem", 
+                padding: "1rem", 
+                backgroundColor: "#f8f9fa", 
+                borderRadius: "4px",
+                border: "1px solid #dee2e6"
+              }}>
+                <p style={{ margin: 0, fontSize: "0.875rem", color: "#495057" }}>
+                  Current status: <strong style={{ 
+                    color: 
+                      listings.find(l => l.id === selectedListingId)?.status === 'active' ? '#155724' :
+                      listings.find(l => l.id === selectedListingId)?.status === 'submitted' ? '#856404' :
+                      listings.find(l => l.id === selectedListingId)?.status === 'rejected' ? '#721c24' :
+                      '#383d41'
+                  }}>
+                    {listings.find(l => l.id === selectedListingId)?.status.toUpperCase()}
+                  </strong>
+                </p>
+                {listings.find(l => l.id === selectedListingId)?.status === 'draft' && (
+                  <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem", color: "#6c757d" }}>
+                    💡 Submit your listing for admin review to make it visible to customers
+                  </p>
+                )}
+                {listings.find(l => l.id === selectedListingId)?.status === 'submitted' && (
+                  <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem", color: "#6c757d" }}>
+                    ⏳ Your listing is pending admin approval
+                  </p>
+                )}
+                {listings.find(l => l.id === selectedListingId)?.status === 'active' && (
+                  <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem", color: "#6c757d" }}>
+                    ✅ Your listing is live and visible to customers
+                  </p>
+                )}
+                {listings.find(l => l.id === selectedListingId)?.status === 'rejected' && (
+                  <>
+                    <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem", color: "#6c757d" }}>
+                      ❌ Your listing was rejected. Please review and update it before resubmitting
                     </p>
-                    <p className="vendor-message-body">{m.content}</p>
 
-                    {m.vendorReply && (
-                      <p className="vendor-message-reply">
-                        <strong>Your reply:</strong> {m.vendorReply}
-                      </p>
-                    )}
-
-                    <textarea
-                      className="vendor-message-textarea"
-                      placeholder="Write a reply..."
-                      value={replyDrafts[m.id] ?? ""}
-                      onChange={(e) =>
-                        handleChangeReply(m.id, e.target.value)
-                      }
-                      rows={2}
-                    />
-
-                    <button
-                      type="button"
-                      className="vendor-save-button"
-                      onClick={() => handleSendReply(m.id)}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Sending..." : "Send reply"}
-                    </button>
-                  </div>
-                ))}
+                    {(() => {
+                      const l = listings.find(x => x.id === selectedListingId);
+                      const reason = l?.rejection_reason || (l as any)?.rejectionReason;
+                      return reason ? (
+                        <div style={{ marginTop: "0.75rem", padding: "0.75rem", background: "#fff3cd", border: "1px solid #ffeeba", borderRadius: 6 }}>
+                          <strong>Rejection reason:</strong>
+                          <div style={{ marginTop: 6 }}>{reason}</div>
+                        </div>
+                      ) : null;
+                    })()}
+                  </>
+                )}
               </div>
             )}
           </form>
@@ -552,15 +856,38 @@ const VendorDashboardPage: React.FC = () => {
 
             <article className="vendor-preview-card">
               <h3 className="vendor-preview-title">
-                {name || "Your Business"}
+                {title || "Your Business"}
               </h3>
 
-              {category && (
-                <p className="vendor-preview-category">{category}</p>
+              {selectedListingId && (
+                <div style={{ margin: '0.5rem 0' }}>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    {(() => {
+                      const u = listings.find(l => l.id === selectedListingId)?.image_url || '';
+                      const src = u ? (String(u).startsWith('/') ? `${API_ORIGIN}${u}` : u) : '';
+                      return (
+                        <img
+                          src={src}
+                          alt="Listing"
+                          style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 6, display: (u ? 'block' : 'none') }}
+                        />
+                      );
+                    })()}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                  />
+                  <button type="button" className="vendor-save-button" style={{ marginLeft: '0.5rem' }} onClick={handleImageUpload}>
+                    Upload Image
+                  </button>
+                  {imageStatus && <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>{imageStatus}</span>}
+                </div>
               )}
 
-              {location && (
-                <p className="vendor-preview-location">{location}</p>
+              {city && (
+                <p className="vendor-preview-location">{city}</p>
               )}
 
               {openingHours && (
@@ -576,12 +903,115 @@ const VendorDashboardPage: React.FC = () => {
               )}
 
               <div className="vendor-preview-contact">
-                {email && <p className="vendor-preview-item">📧 {email}</p>}
-                {phone && <p className="vendor-preview-item">📞 {phone}</p>}
+                {contactEmail && <p className="vendor-preview-item">📧 {contactEmail}</p>}
+                {contactPhone && <p className="vendor-preview-item">📞 {contactPhone}</p>}
               </div>
             </article>
           </aside>
         </section>
+          )}
+        </>
+        )}
+
+        {/* Create form modal when editing existing listings */}
+        {listings.length > 0 && showCreateForm && (
+          <section className="vendor-layout" style={{ marginTop: "2rem", borderTop: "2px solid #333", paddingTop: "2rem" }}>
+            <form className="vendor-form" onSubmit={(e) => { e.preventDefault(); handleCreateListing(); }}>
+              <h2 className="vendor-section-title">Create New Business Listing</h2>
+              
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="new-vendor-title">Business Title</label>
+                <input
+                  id="new-vendor-title"
+                  type="text"
+                  className="vendor-input"
+                  value={title}
+                  maxLength={MAX_TITLE}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, title: undefined }));
+                  }}
+                  required
+                />
+                {fieldErrors.title && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.title}
+                  </div>
+                )}
+
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="new-vendor-city">City</label>
+                <input
+                  id="new-vendor-city"
+                  type="text"
+                  className="vendor-input"
+                  placeholder="Luxembourg, Esch-sur-Alzette..."
+                  value={city}
+                  maxLength={MAX_CITY}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, city: undefined }));
+                  }}
+                  required
+                />
+                {fieldErrors.city && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.city}
+                  </div>
+                )}
+
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="new-vendor-description">Description</label>
+                <textarea
+                  id="new-vendor-description"
+                  className="vendor-textarea"
+                  rows={4}
+                  placeholder="Describe your services and special offers..."
+                  value={description}
+                  maxLength={MAX_DESC}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                  }}
+                  required
+                />
+                {fieldErrors.description && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.description}
+                  </div>
+                )}
+
+              </div>
+
+              {submitError && (
+                <p style={{ color: "red", marginBottom: "1rem" }}>{submitError}</p>
+              )}
+
+              <button type="submit" className="vendor-save-button" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Listing"}
+              </button>
+
+              <button
+                type="button"
+                className="vendor-save-button"
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setFieldErrors({});
+                  setSubmitError("");
+                  setStatusMessage("");
+                }}                
+                style={{ marginLeft: "1rem", backgroundColor: "#999" }}
+              >
+                Cancel
+              </button>
+            </form>
+          </section>
+        )}
+        </>
         )}
       </main>
     </div>

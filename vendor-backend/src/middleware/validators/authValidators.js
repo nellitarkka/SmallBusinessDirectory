@@ -74,7 +74,19 @@ const validateLogin = [
   handleValidationErrors
 ];
 
+// Validation for resend verification
+const validateResendVerification = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('Email is required')
+    .isEmail().withMessage('Must be a valid email address')
+    .normalizeEmail(),
+
+  handleValidationErrors
+];
+
 module.exports = {
   validateRegister,
-  validateLogin
+  validateLogin,
+  validateResendVerification
 };

@@ -86,6 +86,12 @@
     transform: translateY(-1px);
   }
   
+  .auth-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
   .auth-footer {
     margin-top: 1.25rem;
     display: flex;
@@ -107,10 +113,22 @@
     text-decoration: underline;
   }
   .auth-error {
-    margin-top: 0.25rem;
-    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
     color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.75rem;
   }
+  
+  .auth-field-error {
+    margin-top: 0.25rem;
+    font-size: 0.82rem;
+    color: #b91c1c;
+    opacity: 0.9;
+  }
+  
   
   
   /* Smaller screens */

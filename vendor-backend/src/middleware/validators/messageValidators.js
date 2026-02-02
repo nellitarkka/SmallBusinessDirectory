@@ -14,11 +14,11 @@ const handleValidationErrors = (req, res, next) => {
 
 // Validation for sending a message
 const validateSendMessage = [
-  body('recipient_id')
+  body('recipient_id')  // Changed from recipientId
     .notEmpty().withMessage('Recipient ID is required')
     .isInt({ min: 1 }).withMessage('Recipient ID must be a positive integer'),
   
-  body('listing_id')
+  body('listing_id')  // Changed from listingId
     .optional()
     .isInt({ min: 1 }).withMessage('Listing ID must be a positive integer'),
   

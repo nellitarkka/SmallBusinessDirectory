@@ -20,7 +20,12 @@ const Vendor = {
 
   async findByUserId(userId) {
     try {
-      const query = 'SELECT * FROM vendors WHERE user_id = $1';
+      const query = `
+        SELECT v.*, u.is_email_verified
+        FROM vendors v
+        JOIN users u ON u.id = v.user_id
+        WHERE v.user_id = $1
+      `;
       const result = await pool.query(query, [userId]);
       return result.rows[0];
     } catch (error) {

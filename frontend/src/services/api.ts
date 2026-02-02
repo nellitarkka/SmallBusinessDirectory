@@ -1,4 +1,5 @@
 const API_BASE_URL = 'http://localhost:3000/api';
+export const API_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
 
 // Helper to get token from localStorage
 const getToken = () => localStorage.getItem('token');
@@ -7,13 +8,11 @@ const getToken = () => localStorage.getItem('token');
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const token = getToken();
   
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
 
   // Add any custom headers from options
   if (options.headers) {
-    Object.assign(headers, options.headers);
+    Object.assign(headers, options.headers as Record<string, string>);
   }
 
   // Add authorization token if available
@@ -21,18 +20,46 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const isFormData = options.body instanceof FormData;
+  const finalHeaders = isFormData ? headers : { 'Content-Type': 'application/json', ...headers };
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers,
+    headers: finalHeaders,
   });
 
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+  // Gracefully handle 204 No Content or non-JSON responses
+  const contentType = response.headers.get('content-type') || '';
+  let data: any = null;
+
+  if (response.status !== 204) {
+    // Try parsing JSON if content-type indicates JSON, otherwise try text
+    if (contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+    } else {
+      // Attempt to read text; ignore if empty
+      const text = await response.text();
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
+      }
+    }
   }
 
-  return data;
+  if (!response.ok) {
+    const message = (data && (data.message || data.error)) || response.statusText || 'API request failed';
+    throw new Error(message);
+  }
+
+  // For empty bodies, return a conventional success shape
+  return data ?? { status: 'success' };
 }
 
 // ==================== AUTH API ====================
@@ -80,6 +107,12 @@ export const authAPI = {
     return await apiCall('/auth/profile');
   },
 
+  verifyEmail: async (token: string) => {
+    return await apiCall(`/auth/verify-email/${token}`, {
+      method: 'GET',
+    });
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -106,16 +139,13 @@ export const listingsAPI = {
 
   // Create new listing (vendors only)
   create: async (listingData: {
-    business_name: string;
+    title: string;
     description: string;
-    address: string;
     city: string;
-    state: string;
-    zip_code: string;
-    phone: string;
-    email: string;
-    website?: string;
-    category_id: number;
+    contactPhone?: string;
+    contactEmail?: string;
+    openingHours?: string;
+    categoryIds?: number[];
   }) => {
     return await apiCall('/listings', {
       method: 'POST',
@@ -125,19 +155,16 @@ export const listingsAPI = {
 
   // Update listing (vendors only, must own the listing)
   update: async (id: number | string, updates: Partial<{
-    business_name: string;
+    title: string;
     description: string;
-    address: string;
     city: string;
-    state: string;
-    zip_code: string;
-    phone: string;
-    email: string;
-    website: string;
-    category_id: number;
+    contactPhone: string;
+    contactEmail: string;
+    openingHours: string;
+    status: "draft" | "submitted" | "active" | "rejected";
   }>) => {
     return await apiCall(`/listings/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(updates),
     });
   },
@@ -147,6 +174,46 @@ export const listingsAPI = {
     return await apiCall(`/listings/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  // Get vendor's own listings
+  getMine: async () => {
+    return await apiCall('/listings/vendor/my-listings');
+  },
+
+  // Get all listings for admin moderation (all statuses)
+  getAllAdmin: async () => {
+    return await apiCall('/listings/admin/all');
+  },
+
+  // Update listing status (admin only)
+  updateStatusAdmin: async (id: number | string,status: "active" | "rejected",rejectionReason?: string) => {
+    return await apiCall(`/listings/admin/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status,
+        ...(status === "rejected" ? { rejection_reason: rejectionReason } : {}),
+      }),
+    });
+  },
+  
+
+  // Upload single image for a listing (vendors only)
+  uploadImage: async (id: number | string, file: File) => {
+    const form = new FormData();
+    form.append('image', file);
+    return await apiCall(`/listings/${id}/image`, {
+      method: 'PATCH',
+      body: form,
+    });
+  },
+};
+
+// ==================== VENDOR API ====================
+export const vendorAPI = {
+  // Get vendor profile
+  getProfile: async () => {
+    return await apiCall('/vendor/profile');
   },
 };
 
@@ -193,13 +260,16 @@ export const messagesAPI = {
   send: (recipientId: number, content: string, listingId?: number, subject?: string) =>
     apiCall('/messages', {
       method: 'POST',
-      body: JSON.stringify({ recipientId, content, listingId, subject }),
+      body: JSON.stringify({ recipient_id: recipientId, content, listing_id: listingId, subject }),
     }),
 
   getInbox: () => apiCall('/messages/inbox'),
   getSent: () => apiCall('/messages/sent'),
   getConversation: (otherUserId: number) => apiCall(`/messages/conversation/${otherUserId}`),
-  markAsRead: (messageId: number) => apiCall(`/messages/${messageId}/read`, { method: 'POST' }),
+    markAsRead: (messageId: number) => apiCall(`/messages/${messageId}/read`, { method: 'PUT' }),
   delete: (messageId: number) => apiCall(`/messages/${messageId}`, { method: 'DELETE' }),
   getUnreadCount: () => apiCall('/messages/unread-count'),
 };
+
+// ==================== EMAIL VERIFICATION ====================
+export const verifyEmail = (token: string) => authAPI.verifyEmail(token);

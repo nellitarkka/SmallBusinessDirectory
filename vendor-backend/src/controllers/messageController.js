@@ -15,8 +15,8 @@ exports.sendMessage = async (req, res) => {
 
     const message = await Message.create(
       senderId,
-      recipient_id,
-      listing_id || null,
+      Number(recipient_id),
+      listing_id ? Number(listing_id) : null,
       subject || '',
       content
     );

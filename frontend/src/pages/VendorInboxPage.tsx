@@ -1,55 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useMessages } from "../data/MessagesStore";
 import { useAuth } from "../auth/AuthContext";
-import { useVendors } from "../data/VendorStore";
 import "./VendorInboxPage.css";
 
 const VendorInboxPage: React.FC = () => {
   const { user } = useAuth();
-  const { vendors } = useVendors();
-  const { messages, addReply } = useMessages();
+  const { messages, sentMessages, fetchInbox, fetchSent, sendMessage, isLoading, markAsRead } = useMessages();
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetchInbox();
+    fetchSent();
+  }, []);
 
   // only vendors should see this page
   if (!user || user.role !== "vendor") return null;
 
-  // find the vendor record that belongs to this logged-in vendor (by email)
-  const currentVendor = vendors.find((v) => v.email === user.email);
-
-  if (!currentVendor) {
-    return (
-      <div className="vendor-inbox-root">
-        <Navbar />
-        <main className="vendor-inbox-main">
-          <h1>My Inbox</h1>
-          <p className="vendor-inbox-empty">
-            We couldn&apos;t find a vendor profile linked to this account yet.
-          </p>
-        </main>
-      </div>
-    );
-  }
-
-  // Filter only messages sent to THIS vendor (by vendorId)
-  const vendorMessages = messages.filter(
-    (m) => m.vendorId === currentVendor.id
-  );
+  // Backend returns these already scoped to the current vendor
+  const vendorMessages = messages;
+  const mySent = sentMessages;
 
   const handleChangeReply = (messageId: string, text: string) => {
     setReplyDrafts((prev) => ({ ...prev, [messageId]: text }));
   };
 
-  const handleReply = (messageId: string) => {
+  const handleReply = async (messageId: string, recipientUserId: number, listingId?: number, subject?: string) => {
     const text = replyDrafts[messageId]?.trim();
     if (!text) {
       alert("Please type a reply.");
       return;
     }
-
-    addReply(messageId, text);
-    setReplyDrafts((prev) => ({ ...prev, [messageId]: "" }));
-    alert("Reply saved (demo only).");
+    try {
+      await sendMessage(recipientUserId, text, listingId, subject ? `Re: ${subject}` : undefined);
+      setReplyDrafts((prev) => ({ ...prev, [messageId]: "" }));
+      await fetchInbox();
+      await markAsRead(Number(messageId));
+    } catch (err) {
+      console.error("Failed to send reply", err);
+      alert("Failed to send reply.");
+    }
   };
 
   return (
@@ -59,28 +49,26 @@ const VendorInboxPage: React.FC = () => {
       <main className="vendor-inbox-main">
         <h1>My Inbox</h1>
 
-        {vendorMessages.length === 0 ? (
-          <p className="vendor-inbox-empty">
-            You have no messages yet.
-          </p>
+        {isLoading ? (
+          <p className="vendor-inbox-empty">Loading messages…</p>
+        ) : vendorMessages.length === 0 && mySent.length === 0 ? (
+          <p className="vendor-inbox-empty">You have no messages yet.</p>
         ) : (
           <div className="vendor-inbox-list">
             {vendorMessages.map((msg) => (
               <div key={msg.id} className="vendor-inbox-item">
                 <h3>
-                  From: {msg.customerEmail || "Unknown customer"}
+                  From: {msg.sender_name || msg.sender_email || "Unknown sender"}
                 </h3>
                 <p className="vendor-inbox-meta">
-                  Sent: {new Date(msg.createdAt).toLocaleString()}
+                  Sent: {new Date(msg.created_at).toLocaleString()}
                 </p>
 
-                <p className="vendor-inbox-content">{msg.content}</p>
-
-                {msg.vendorReply && (
-                  <p className="vendor-inbox-reply">
-                    <strong>Your reply:</strong> {msg.vendorReply}
-                  </p>
+                {msg.subject && (
+                  <p className="vendor-inbox-meta">Subject: {msg.subject}</p>
                 )}
+
+                <p className="vendor-inbox-content">{msg.content}</p>
 
                 <textarea
                   className="vendor-inbox-textarea"
@@ -94,10 +82,25 @@ const VendorInboxPage: React.FC = () => {
 
                 <button
                   className="vendor-inbox-btn"
-                  onClick={() => handleReply(msg.id)}
+                  onClick={() => handleReply(String(msg.id), msg.sender_id, msg.listing_id, msg.subject)}
                 >
                   Send Reply
                 </button>
+              </div>
+            ))}
+
+            {mySent.map((msg) => (
+              <div key={`sent-${msg.id}`} className="vendor-inbox-item">
+                <h3>
+                  To: {msg.recipient_name || msg.recipient_email || "Unknown recipient"}
+                </h3>
+                <p className="vendor-inbox-meta">
+                  Sent: {new Date(msg.created_at).toLocaleString()}
+                </p>
+                {msg.subject && (
+                  <p className="vendor-inbox-meta">Subject: {msg.subject}</p>
+                )}
+                <p className="vendor-inbox-content">{msg.content}</p>
               </div>
             ))}
           </div>
