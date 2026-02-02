@@ -1,4 +1,4 @@
-export type VendorStatus = "draft" | "submitted" | "approved" | "rejected";
+export type VendorStatus = "draft" | "submitted" | "active" | "rejected";
 
 export interface Vendor {
   id: number | string;
@@ -8,10 +8,20 @@ export interface Vendor {
   description?: string;
   email?: string;
   phone?: string;
+  imageUrl?: string;
+  vendorUserId?: number;
   status: VendorStatus;
   rejectionReason?: string;
   openingHours?: string;
   flaggedReason?: string;
+  possibleDuplicates?: Array<{
+    id: number | string;
+    name: string;
+    location?: string;
+    status?: string;
+    score?: number;
+  }>;
+  
   
 }
 
@@ -25,7 +35,7 @@ export const initialVendors: Vendor[] = [
     email: "fresh@market.com",
     phone: "+31000000001",
     openingHours: "Mon-Fri 9:00-18:00, Sat 10:00-16:00",
-    status: "approved",          
+    status: "active",          
   },
   {
     id: 2,
@@ -48,7 +58,7 @@ export const initialVendors: Vendor[] = [
     email: "service@greenandclean.nl",
     phone: "+31000000003",
     openingHours: "Mon-Fri 9:00-18:00, Sat 10:00-16:00",
-    status: "approved", 
+    status: "active", 
   },
   {
     id: 4,
@@ -73,7 +83,7 @@ export const initialVendors: Vendor[] = [
     email: "info@bloomingflorals.nl",
     phone: "+31000000005",
     openingHours: "Mon-Fri 9:00-18:00, Sat 10:00-16:00",
-    status: "approved",
+    status: "active",
   },
   {
     id: 6,
@@ -98,7 +108,7 @@ export const initialVendors: Vendor[] = [
     email: "contact@tasteofistanbul.nl",
     phone: "+31000000007",
     openingHours: "Mon-Fri 9:00-18:00, Sat 10:00-16:00",
-    status: "approved",
+    status: "active",
   },  
 
 ];

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./AuthPage.css";
 import { useAuth } from "../auth/AuthContext";
+import { validateEmail, validatePassword, validateName, validateRequired } from "../utils/formValidation";
 
 const VendorRegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,16 +17,42 @@ const VendorRegisterPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [businessError, setBusinessError] = useState("");
+  const [cityError, setCityError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [firstNameError, setFirstNameError] = useState("");
+  const [lastNameError, setLastNameError] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
+  
+    const pErr = validatePassword(password);
+    setPasswordError(pErr);
+    if (pErr) return;
+  
+    const cErr = confirmPassword && confirmPassword !== password ? "Passwords do not match." : "";
+    setConfirmError(cErr);
+    if (cErr) return;
+  
+    const fnErr = validateName(firstName, "First name");
+    const lnErr = validateName(lastName, "Last name");
+    setFirstNameError(fnErr);
+    setLastNameError(lnErr);
+    if (fnErr || lnErr) return;
+  
+    const eErr = validateEmail(email);
+    setEmailError(eErr);
+    if (eErr) return;
+  
+    const bErr = validateRequired(businessName, "Business name");
+    const cityErr = validateRequired(city, "City");
+    setBusinessError(bErr);
+    setCityError(cityErr);
+    if (bErr || cityErr) return;
+  
     try {
       await register({
         email,
@@ -37,7 +64,6 @@ const VendorRegisterPage: React.FC = () => {
         vatNumber,
         role: "vendor",
       });
-      // after successful registration go to vendor dashboard
       navigate("/vendor/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -66,9 +92,15 @@ const VendorRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="Your first name"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFirstName(v);
+                  setFirstNameError(validateName(v, "First name"));
+                  setError("");
+                }}
                 required
               />
+              {firstNameError && <p className="auth-field-error">{firstNameError}</p>}
             </div>
 
             <div className="auth-field">
@@ -81,9 +113,15 @@ const VendorRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="Your last name"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setLastName(v);
+                  setLastNameError(validateName(v, "Last name"));
+                  setError("");
+                }}
                 required
               />
+              {lastNameError && <p className="auth-field-error">{lastNameError}</p>}
             </div>
 
             <div className="auth-field">
@@ -96,9 +134,15 @@ const VendorRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="Your business name"
                 value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setBusinessName(v);
+                  setBusinessError(validateRequired(v, "Business name"));
+                  setError("")
+                }}
                 required
               />
+              {businessError && <p className="auth-field-error">{businessError}</p>}
             </div>
 
             <div className="auth-field">
@@ -111,8 +155,15 @@ const VendorRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="City of operation"
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setCity(v);
+                  setCityError(validateRequired(v, "City"));
+                  setError("")
+                }}                
+                required
               />
+              {cityError && <p className="auth-field-error">{cityError}</p>}
             </div>
 
             <div className="auth-field">
@@ -139,9 +190,15 @@ const VendorRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="vendor@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEmail(v);
+                  setEmailError(validateEmail(v));
+                  setError("");
+                }}                
                 required
               />
+              {emailError && <p className="auth-field-error">{emailError}</p>}
             </div>
 
             <div className="auth-field">
@@ -154,9 +211,15 @@ const VendorRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPassword(v);
+                  setPasswordError(validatePassword(v));
+                  setError("")
+                }}                
                 required
               />
+              {passwordError && <p className="auth-field-error">{passwordError}</p>}
             </div>
 
             <div className="auth-field">
@@ -172,9 +235,15 @@ const VendorRegisterPage: React.FC = () => {
                 className="auth-input"
                 placeholder="••••••••"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setConfirmPassword(v);
+                  setConfirmError(v && v !== password ? "Passwords do not match." : "");
+                  setError("")
+                }}                
                 required
               />
+              {confirmError && <p className="auth-field-error">{confirmError}</p>}
             </div>
 
             {error && <p className="auth-error">{error}</p>}

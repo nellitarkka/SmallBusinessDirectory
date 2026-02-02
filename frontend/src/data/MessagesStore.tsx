@@ -48,6 +48,7 @@ export const MessagesProvider = ({ children }: { children: ReactNode }) => {
   const sendMessage = async (recipientId: number, content: string, listingId?: number, subject?: string) => {
     try {
       setIsLoading(true);
+      console.debug("[MessagesStore] sendMessage", { recipientId, listingId, subject });
       const response = await messagesAPI.send(recipientId, content, listingId, subject);
       if (response.status === 'success') {
         await fetchSent(); // Refresh sent messages

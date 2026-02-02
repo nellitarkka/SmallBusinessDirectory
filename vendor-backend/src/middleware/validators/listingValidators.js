@@ -71,22 +71,23 @@ const validateUpdateListing = [
     .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters'),
   
   body('city')
-    .optional()
-    .trim()
-    .isLength({ max: 50 }).withMessage('City name too long'),
+  .optional()
+  .trim()
+  .notEmpty().withMessage('City cannot be empty')
+  .isLength({ min: 2, max: 50 }).withMessage('City must be 2-50 characters'),
   
-  body('contact_email')
+  body('contactEmail')
     .optional()
     .trim()
     .isEmail().withMessage('Must be a valid email address')
     .normalizeEmail(),
   
-  body('contact_phone')
+  body('contactPhone')
     .optional()
     .trim()
     .matches(/^[\d\s\+\-\(\)]+$/).withMessage('Invalid phone number format'),
   
-  body('opening_hours')
+  body('openingHours')
     .optional()
     .trim()
     .isLength({ max: 200 }).withMessage('Opening hours too long'),
