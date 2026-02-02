@@ -36,6 +36,16 @@ This branch contains the source code and README files in the respective folders 
 
 ---
 
+## Evidence Pack
+
+This section aggregates QA and documentation evidence for the final release.
+
+- System test plan + regression checklist: [docs/TESTING.md](docs/TESTING.md)
+- Architecture overview: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Deployment notes: [docs/DEPLOYMENT_AZURE.md](docs/DEPLOYMENT_AZURE.md)
+
+---
+
 ## 📄 Database Documentation
 
 Detailed documentation of the database design and implementation can be found in the following locations:
