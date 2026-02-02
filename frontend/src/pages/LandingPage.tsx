@@ -103,7 +103,7 @@ const LandingPage: React.FC = () => {
       navigate(CUSTOMER_SIGNUP_PATH);
       return;
     }
-    toggleFavorite(vendorId);
+    toggleFavorite(Number(vendorId));
   };
 
   return (
@@ -172,7 +172,7 @@ const LandingPage: React.FC = () => {
           ) : (
             <div className="landing-vendor-grid">
               {filteredVendors.map((vendor) => {
-                const favorite = isFavorite(vendor.id);
+                const favorite = isFavorite(Number(vendor.id));
 
                 return (
                   <article key={vendor.id} className="vendor-card">

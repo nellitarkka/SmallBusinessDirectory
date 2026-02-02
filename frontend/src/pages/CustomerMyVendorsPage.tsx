@@ -11,7 +11,7 @@ const CustomerMyVendorsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const favoriteVendors: Vendor[] = vendors.filter((v) =>
-    favoriteVendorIds.includes(v.id)
+    favoriteVendorIds.includes(Number(v.id))
   );
 
   const handleViewDetails = (id: Vendor["id"]) => {
@@ -39,7 +39,7 @@ const CustomerMyVendorsPage: React.FC = () => {
           ) : (
             <div className="customer-vendor-grid">
               {favoriteVendors.map((vendor) => {
-                const favorite = isFavorite(vendor.id);
+                const favorite = isFavorite(Number(vendor.id));
 
                 return (
                   <article key={vendor.id} className="vendor-card">
@@ -53,7 +53,7 @@ const CustomerMyVendorsPage: React.FC = () => {
                             ? "vendor-save-btn vendor-save-btn--active"
                             : "vendor-save-btn"
                         }
-                        onClick={() => toggleFavorite(vendor.id)}
+                        onClick={() => toggleFavorite(Number(vendor.id))}
                       >
                         {favorite ? "♥ Saved" : "♡ Save"}
                       </button>

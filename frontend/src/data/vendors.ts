@@ -3,17 +3,29 @@ export type VendorStatus = "draft" | "submitted" | "active" | "rejected";
 export interface Vendor {
   id: number | string;
   name: string;
+
   category?: string;
   location?: string;
   description?: string;
   email?: string;
   phone?: string;
+
+  // listing extras (optional)
+  address?: string;
+  state?: string;
+  zip_code?: string;
+  website?: string;
+  category_id?: number;
+
   imageUrl?: string;
   vendorUserId?: number;
+
   status: VendorStatus;
+
   rejectionReason?: string;
   openingHours?: string;
   flaggedReason?: string;
+
   possibleDuplicates?: Array<{
     id: number | string;
     name: string;
@@ -21,9 +33,8 @@ export interface Vendor {
     status?: string;
     score?: number;
   }>;
-  
-  
 }
+
 
 export const initialVendors: Vendor[] = [
   {

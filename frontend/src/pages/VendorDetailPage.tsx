@@ -83,7 +83,7 @@ const VendorDetailPage: React.FC = () => {
             openingHours: listing.opening_hours,
             imageUrl,
             vendorUserId: listing.vendor_user_id,
-            status: "approved",
+            status: "active",
           };
 
           if (!ignore) setLoadedVendor(mapped);
@@ -109,7 +109,7 @@ const VendorDetailPage: React.FC = () => {
     if (!vendor?.location) return "";
     const parts = vendor.location
       .split(/[,|]/)
-      .map((p) => p.trim())
+      .map((p: string) => p.trim())
       .filter(Boolean);
     return Array.from(new Set(parts)).join(" • ");
   }, [vendor?.location]);
@@ -145,7 +145,7 @@ const VendorDetailPage: React.FC = () => {
     );
   }
 
-  const favorite = isFavorite(vendor.id);
+  const favorite = isFavorite(Number(vendor.id));
 
   const handleContactEmail = () => {
     const email = vendor.email || "vendor@example.com";
@@ -187,7 +187,7 @@ const VendorDetailPage: React.FC = () => {
       navigate(CUSTOMER_SIGNUP_PATH);
       return;
     }
-    toggleFavorite(vendor.id);
+    toggleFavorite(Number(vendor.id));
   };
 
   // ✅ Option B: Send message requires customer login
