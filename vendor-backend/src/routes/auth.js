@@ -13,4 +13,8 @@ router.get('/profile', authenticate, authController.getProfile);
 router.get('/verify-email/:token', loginLimiter, authController.verifyEmail);
 router.post('/resend-verification', loginLimiter, validateResendVerification, authController.resendVerification);
 
+router.patch('/profile', authenticate, authController.updateProfile);
+router.post('/change-password', authenticate, authController.changePassword);
+
+
 module.exports = router;

@@ -197,6 +197,7 @@ const VendorDashboardPage: React.FC = () => {
         setTitle("");
         setDescription("");
         setCity("");
+        setContactEmail(user?.email || "");
         setContactPhone("");
         setOpeningHours("");
         setFieldErrors({});
@@ -441,7 +442,10 @@ const VendorDashboardPage: React.FC = () => {
                   className="vendor-input"
                   placeholder="you@business.com"
                   value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
+                  onChange={(e) => {
+                    setContactEmail(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, contactEmail: undefined }));
+                  }}                  
                 />
               </div>
 
@@ -539,6 +543,7 @@ const VendorDashboardPage: React.FC = () => {
                   setDescription("");
                   setContactPhone("");
                   setOpeningHours("");
+                  setContactEmail(user?.email || "");
                 }}
               >
                 + Create New Listing
@@ -914,13 +919,25 @@ const VendorDashboardPage: React.FC = () => {
         )}
 
         {/* Create form modal when editing existing listings */}
+        {/* Create form when vendor already has listings */}
         {listings.length > 0 && showCreateForm && (
-          <section className="vendor-layout" style={{ marginTop: "2rem", borderTop: "2px solid #333", paddingTop: "2rem" }}>
-            <form className="vendor-form" onSubmit={(e) => { e.preventDefault(); handleCreateListing(); }}>
+          <section
+            className="vendor-layout"
+            style={{ marginTop: "2rem", borderTop: "2px solid #333", paddingTop: "2rem" }}
+          >
+            <form
+              className="vendor-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreateListing();
+              }}
+            >
               <h2 className="vendor-section-title">Create New Business Listing</h2>
-              
+
               <div className="vendor-field">
-                <label className="vendor-label" htmlFor="new-vendor-title">Business Title</label>
+                <label className="vendor-label" htmlFor="new-vendor-title">
+                  Business Title
+                </label>
                 <input
                   id="new-vendor-title"
                   type="text"
@@ -938,11 +955,12 @@ const VendorDashboardPage: React.FC = () => {
                     {fieldErrors.title}
                   </div>
                 )}
-
               </div>
 
               <div className="vendor-field">
-                <label className="vendor-label" htmlFor="new-vendor-city">City</label>
+                <label className="vendor-label" htmlFor="new-vendor-city">
+                  City
+                </label>
                 <input
                   id="new-vendor-city"
                   type="text"
@@ -961,11 +979,82 @@ const VendorDashboardPage: React.FC = () => {
                     {fieldErrors.city}
                   </div>
                 )}
+              </div>
 
+              {/* ✅ MISSING FIELDS — add these to match first listing form */}
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="new-vendor-email">
+                  Contact email
+                </label>
+                <input
+                  id="new-vendor-email"
+                  type="email"
+                  className="vendor-input"
+                  placeholder="you@business.com"
+                  value={contactEmail}
+                  maxLength={MAX_EMAIL}
+                  onChange={(e) => {
+                    setContactEmail(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, contactEmail: undefined }));
+                  }}
+                />
+                {fieldErrors.contactEmail && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.contactEmail}
+                  </div>
+                )}
               </div>
 
               <div className="vendor-field">
-                <label className="vendor-label" htmlFor="new-vendor-description">Description</label>
+                <label className="vendor-label" htmlFor="new-vendor-phone">
+                  Phone number
+                </label>
+                <input
+                  id="new-vendor-phone"
+                  type="tel"
+                  className="vendor-input"
+                  placeholder="+352 ..."
+                  value={contactPhone}
+                  maxLength={MAX_PHONE}
+                  onChange={(e) => {
+                    setContactPhone(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, contactPhone: undefined }));
+                  }}
+                />
+                {fieldErrors.contactPhone && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.contactPhone}
+                  </div>
+                )}
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="new-vendor-hours">
+                  Opening hours
+                </label>
+                <input
+                  id="new-vendor-hours"
+                  type="text"
+                  className="vendor-input"
+                  placeholder="e.g. Mon–Fri 9:00–18:00, Sat 10:00–16:00"
+                  value={openingHours}
+                  maxLength={MAX_OPENING}
+                  onChange={(e) => {
+                    setOpeningHours(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, openingHours: undefined }));
+                  }}
+                />
+                {fieldErrors.openingHours && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.openingHours}
+                  </div>
+                )}
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label" htmlFor="new-vendor-description">
+                  Description
+                </label>
                 <textarea
                   id="new-vendor-description"
                   className="vendor-textarea"
@@ -984,7 +1073,6 @@ const VendorDashboardPage: React.FC = () => {
                     {fieldErrors.description}
                   </div>
                 )}
-
               </div>
 
               {submitError && (
@@ -1003,8 +1091,9 @@ const VendorDashboardPage: React.FC = () => {
                   setFieldErrors({});
                   setSubmitError("");
                   setStatusMessage("");
-                }}                
+                }}
                 style={{ marginLeft: "1rem", backgroundColor: "#999" }}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>

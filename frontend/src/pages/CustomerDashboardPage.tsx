@@ -6,7 +6,7 @@ import type { Vendor } from "../data/vendors";
 import "./CustomerDashboardPage.css";
 import { useMessages } from "../data/MessagesStore";
 import { useAuth } from "../auth/AuthContext";
-
+import { useNavigate } from "react-router-dom";
 
 type VendorId = Vendor["id"];
 
@@ -19,19 +19,22 @@ const CustomerDashboardPage: React.FC = () => {
   const { listings: vendors } = usePublicListings();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { sendMessage } = useMessages();
-  const { user } = useAuth();
+  const { user } = useAuth(); // kept (useful if you want to restrict actions later)
 
   const [messageText, setMessageText] = useState("");
 
   const approvedVendors = vendors;
 
+  const normalizedSearch = search.toLowerCase();
+  const navigate = useNavigate();
+
   const handleToggleExpand = (id: VendorId) => {
     setExpandedVendorId((prev) => (prev === id ? null : id));
   };
 
-  const normalizedSearch = search.toLowerCase();
-
-  
+  const handleViewDetails = (id: Vendor["id"]) => {
+    navigate(`/vendors/${id}`);
+  };
 
   const filteredVendors = approvedVendors.filter((vendor) => {
     if (!normalizedSearch) return true;
@@ -49,26 +52,26 @@ const CustomerDashboardPage: React.FC = () => {
       alert("Please type a message before sending.");
       return;
     }
-  
+
     try {
       if (!vendor.vendorUserId) {
         alert("This vendor cannot receive messages yet.");
         return;
       }
+
       await sendMessage(
         Number(vendor.vendorUserId),
         messageText.trim(),
         Number(vendor.id),
         undefined
       );
-  
+
       setMessageText("");
       alert("Your message has been sent.");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to send message");
     }
   };
-  
 
   const handleContactEmail = (vendor: Vendor) => {
     const email = vendor.email || "vendor@example.com";
@@ -92,9 +95,7 @@ const CustomerDashboardPage: React.FC = () => {
         <header className="customer-header">
           <div>
             <h1>Customer Dashboard</h1>
-            <p>
-              Browse all vendors, view their details, and contact them directly.
-            </p>
+            <p>Browse all vendors, view their details, and contact them directly.</p>
           </div>
 
           <div className="customer-search-wrapper">
@@ -110,9 +111,7 @@ const CustomerDashboardPage: React.FC = () => {
 
         <section className="customer-vendors-section">
           {filteredVendors.length === 0 ? (
-            <p className="customer-empty-state">
-              No vendors match your search yet.
-            </p>
+            <p className="customer-empty-state">No vendors match your search yet.</p>
           ) : (
             <div className="customer-vendor-grid">
               {filteredVendors.map((vendor) => {
@@ -120,16 +119,16 @@ const CustomerDashboardPage: React.FC = () => {
                 const favorite = isFavorite(vendor.id);
 
                 return (
-                  <article key={vendor.id} className="customer-vendor-card">
-                    <div className="customer-vendor-card-header">
-                      <h2 className="customer-vendor-title">{vendor.name}</h2>
+                  <article key={vendor.id} className="vendor-card">
+                    <div className="vendor-card-header">
+                      <h2 className="vendor-card-title">{vendor.name}</h2>
 
                       <button
                         type="button"
                         className={
                           favorite
-                            ? "customer-favorite-btn customer-favorite-btn--active"
-                            : "customer-favorite-btn"
+                            ? "vendor-save-btn vendor-save-btn--active"
+                            : "vendor-save-btn"
                         }
                         onClick={() => toggleFavorite(vendor.id)}
                       >
@@ -138,42 +137,48 @@ const CustomerDashboardPage: React.FC = () => {
                     </div>
 
                     {vendor.category && (
-                      <p className="customer-vendor-category">
-                        {vendor.category}
-                      </p>
+                      <p className="vendor-card-category">{vendor.category}</p>
                     )}
+
                     {vendor.location && (
-                      <p className="customer-vendor-location">
-                        {vendor.location}
-                      </p>
+                      <p className="vendor-card-location">{vendor.location}</p>
                     )}
+
                     {vendor.openingHours && (
-                      <p className="customer-vendor-location">
-                        {vendor.location} · {vendor.openingHours}
-                      </p>
+                      <p className="vendor-card-hours">{vendor.openingHours}</p>
                     )}
+
                     {vendor.description && (
-                      <p className="customer-vendor-description">
+                      <p className="vendor-card-description">
                         {vendor.description.length > 140
                           ? vendor.description.slice(0, 140) + "..."
                           : vendor.description}
                       </p>
                     )}
 
-                    <button
-                      className="customer-vendor-toggle-btn"
-                      onClick={() => handleToggleExpand(vendor.id)}
-                    >
-                      {isExpanded
-                        ? "Hide contact options"
-                        : "View contact options"}
-                    </button>
+                    {/* ✅ Actions row: View Details + View/Hide contact options */}
+                    <div className="customer-card-actions">
+                      <button
+                        className="vendor-card-btn"
+                        onClick={() => handleViewDetails(vendor.id)}
+                      >
+                        View Details
+                      </button>
+
+                      <button
+                        className="vendor-card-btn"
+                        onClick={() => handleToggleExpand(vendor.id)}
+                      >
+                        {isExpanded ? "Hide contact options" : "View contact options"}
+                      </button>
+                    </div>
 
                     {isExpanded && (
                       <div className="customer-vendor-contact">
                         <p className="customer-contact-title">
                           Contact {vendor.name}
                         </p>
+
                         <textarea
                           className="customer-message-textarea"
                           placeholder="Write a message to the vendor..."
@@ -181,6 +186,7 @@ const CustomerDashboardPage: React.FC = () => {
                           onChange={(e) => setMessageText(e.target.value)}
                           rows={3}
                         />
+
                         <div className="customer-contact-buttons">
                           <button
                             className="contact-btn contact-btn--primary"
@@ -188,12 +194,14 @@ const CustomerDashboardPage: React.FC = () => {
                           >
                             Contact via email
                           </button>
+
                           <button
                             className="contact-btn contact-btn--primary"
                             onClick={() => handleSendMessage(vendor)}
                           >
                             Send message
                           </button>
+
                           <button
                             className="contact-btn contact-btn--outline"
                             onClick={() => handleCallVendor(vendor)}

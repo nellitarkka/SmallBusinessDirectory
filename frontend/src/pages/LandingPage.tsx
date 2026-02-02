@@ -3,19 +3,21 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { usePublicListings } from "../data/PublicListingsStore";
 import { useFavorites } from "../data/FavoritesStore";
+import { useAuth } from "../auth/AuthContext";
 import type { Vendor } from "../data/vendors";
 
 import "./LandingPage.css";
 
+const CUSTOMER_SIGNUP_PATH = "/signup/customer";
+
 const LandingPage: React.FC = () => {
   const { listings, isLoading } = usePublicListings();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  // only show approved vendors
   const approvedVendors = listings;
 
-  // --- filters state ---
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
@@ -23,6 +25,7 @@ const LandingPage: React.FC = () => {
   const categories = Array.from(
     new Set(approvedVendors.map((v) => v.category).filter(Boolean))
   ) as string[];
+
   const locations = Array.from(
     new Set(approvedVendors.map((v) => v.location).filter(Boolean))
   ) as string[];
@@ -56,12 +59,7 @@ const LandingPage: React.FC = () => {
     return combined.includes(normalizedSearch);
   });
 
-  const sampleVendors = filteredVendors.slice(0, 6);
-
-  // --- actions ---
-
   const handleViewDetails = (id: Vendor["id"]) => {
-    // we can add /vendors/:id page later
     navigate(`/vendors/${id}`);
   };
 
@@ -99,22 +97,29 @@ const LandingPage: React.FC = () => {
     }
   };
 
+  // ✅ Option B: Save requires login (customer account)
+  const handleSave = (vendorId: Vendor["id"]) => {
+    if (!user) {
+      navigate(CUSTOMER_SIGNUP_PATH);
+      return;
+    }
+    toggleFavorite(vendorId);
+  };
+
   return (
     <div className="landing-root">
       <Navbar />
 
       <main className="landing-main">
-        {/* HERO */}
         <section className="landing-hero">
           <div className="landing-hero-text">
             <h1>Discover Local Vendors Near You</h1>
             <p>
-              Browse small businesses, compare services, and contact vendors –
-              all in one place.
+              Browse small businesses, compare services, and contact vendors – all
+              in one place.
             </p>
           </div>
 
-          {/* FILTER BAR */}
           <div className="landing-filters">
             <input
               className="landing-search-input"
@@ -152,29 +157,28 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* FEATURED VENDORS */}
         <section className="landing-vendors-section">
           <div className="landing-vendors-header">
             <h2>Featured Vendors</h2>
-            <p>
-              Filter by category and city, then open a listing for more details.
-            </p>
+            <p>Filter by category and city, then open a listing for more details.</p>
           </div>
 
           {isLoading ? (
             <p className="landing-empty-state">Loading vendors...</p>
-          ) : sampleVendors.length === 0 ? (
+          ) : filteredVendors.length === 0 ? (
             <p className="landing-empty-state">
               No vendors match your filters yet. Try clearing some filters.
             </p>
           ) : (
             <div className="landing-vendor-grid">
-              {sampleVendors.map((vendor) => {
+              {filteredVendors.map((vendor) => {
                 const favorite = isFavorite(vendor.id);
+
                 return (
                   <article key={vendor.id} className="vendor-card">
                     <div className="vendor-card-header">
                       <h3 className="vendor-card-title">{vendor.name}</h3>
+
                       <button
                         type="button"
                         className={
@@ -182,7 +186,7 @@ const LandingPage: React.FC = () => {
                             ? "vendor-save-btn vendor-save-btn--active"
                             : "vendor-save-btn"
                         }
-                        onClick={() => toggleFavorite(vendor.id)}
+                        onClick={() => handleSave(vendor.id)}
                       >
                         {favorite ? "♥ Saved" : "♡ Save"}
                       </button>
@@ -195,8 +199,8 @@ const LandingPage: React.FC = () => {
                       <p className="vendor-card-location">{vendor.location}</p>
                     )}
                     {vendor.openingHours && (
-                        <p className="vendor-card-hours">{vendor.openingHours}</p>
-                      )}
+                      <p className="vendor-card-hours">{vendor.openingHours}</p>
+                    )}
                     {vendor.description && (
                       <p className="vendor-card-description">
                         {vendor.description.length > 120
@@ -205,7 +209,6 @@ const LandingPage: React.FC = () => {
                       </p>
                     )}
 
-                    {/* contact + actions */}
                     <div className="vendor-card-footer">
                       <button
                         className="vendor-card-btn"
