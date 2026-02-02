@@ -3,7 +3,7 @@ const Message = require('../models/message');
 // Send a new message
 exports.sendMessage = async (req, res) => {
   try {
-    const senderId = req.user.id;
+    const senderId = req.user.userId;
     const { recipient_id, listing_id, subject, content } = req.body;
 
     if (!recipient_id || !content) {
