@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./AuthPage.css";
 import { useAuth } from "../auth/AuthContext";
+import { validateEmail, validatePassword, validateName, validateRequired } from "../utils/formValidation";
 
 const VendorRegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,26 +25,17 @@ const VendorRegisterPage: React.FC = () => {
   const [firstNameError, setFirstNameError] = useState("");
   const [lastNameError, setLastNameError] = useState("");
 
-
-
-  const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
   
-    if (!passwordPolicy.test(password)) {
-      setError(
-        "Password must be at least 8 characters and include 1 uppercase letter, 1 lowercase letter, and 1 number."
-      );
-      return;
-    }
+    const pErr = validatePassword(password);
+    setPasswordError(pErr);
+    if (pErr) return;
   
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    const cErr = confirmPassword && confirmPassword !== password ? "Passwords do not match." : "";
+    setConfirmError(cErr);
+    if (cErr) return;
   
     const fnErr = validateName(firstName, "First name");
     const lnErr = validateName(lastName, "Last name");
@@ -55,11 +47,11 @@ const VendorRegisterPage: React.FC = () => {
     setEmailError(eErr);
     if (eErr) return;
   
-    const bErr = businessName.trim() ? "" : "Business name is required.";
-    const cErr = city.trim() ? "" : "City is required.";
+    const bErr = validateRequired(businessName, "Business name");
+    const cityErr = validateRequired(city, "City");
     setBusinessError(bErr);
-    setCityError(cErr);
-    if (bErr || cErr) return;
+    setCityError(cityErr);
+    if (bErr || cityErr) return;
   
     try {
       await register({
@@ -77,32 +69,6 @@ const VendorRegisterPage: React.FC = () => {
       setError(err instanceof Error ? err.message : "Registration failed");
     }
   };
-  
-
-  const validateEmail = (value: string) => {
-    if (!value) return "Email is required.";
-    // simple email check (good enough for frontend)
-    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    return ok ? "" : "Please enter a valid email address.";
-  };
-
-
-  const validatePassword = (value: string) => {
-    if (!value) return "Password is required.";
-    if (!passwordPolicy.test(value))
-      return "Min 8 chars + 1 uppercase + 1 lowercase + 1 number.";
-    return "";
-  };
-
-  const validateName = (value: string, label: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return `${label} is required.`;
-    // letters (incl. accents) + space + apostrophe + hyphen
-    const ok = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(trimmed);
-    return ok ? "" : `${label} should not include numbers or special characters.`;
-  };
-  
-
 
   return (
     <div className="auth-page-root">
@@ -171,7 +137,7 @@ const VendorRegisterPage: React.FC = () => {
                 onChange={(e) => {
                   const v = e.target.value;
                   setBusinessName(v);
-                  setBusinessError(v.trim() ? "" : "Business name is required.");
+                  setBusinessError(validateRequired(v, "Business name"));
                   setError("")
                 }}
                 required
@@ -192,7 +158,7 @@ const VendorRegisterPage: React.FC = () => {
                 onChange={(e) => {
                   const v = e.target.value;
                   setCity(v);
-                  setCityError(v.trim() ? "" : "City is required.");
+                  setCityError(validateRequired(v, "City"));
                   setError("")
                 }}                
                 required

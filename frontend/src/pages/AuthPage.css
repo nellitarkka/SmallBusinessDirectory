@@ -86,6 +86,12 @@
     transform: translateY(-1px);
   }
   
+  .auth-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
   .auth-footer {
     margin-top: 1.25rem;
     display: flex;

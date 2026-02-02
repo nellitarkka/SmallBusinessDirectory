@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./AuthPage.css";
 import { useAuth } from "../auth/AuthContext";
+import { validateEmail, validatePassword, validateName } from "../utils/formValidation";
 
 const CustomerRegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,8 +19,6 @@ const CustomerRegisterPage: React.FC = () => {
   const [emailError, setEmailError] = useState("");
   const [firstNameError, setFirstNameError] = useState("");
   const [lastNameError, setLastNameError] = useState("");
-
-  const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -56,31 +55,7 @@ const CustomerRegisterPage: React.FC = () => {
       setError(err instanceof Error ? err.message : "Registration failed");
     }
   };
-  
 
-  const validateEmail = (value: string) => {
-    if (!value) return "Email is required.";
-    // simple email check (good enough for frontend)
-    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    return ok ? "" : "Please enter a valid email address.";
-  };
-
-  const validatePassword = (value: string) => {
-    if (!value) return "Password is required.";
-    if (!passwordPolicy.test(value))
-      return "Min 8 chars + 1 uppercase + 1 lowercase + 1 number.";
-    return "";
-  };
-  
-  const validateName = (value: string, label: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return `${label} is required.`;
-    // letters (incl. accents) + space + apostrophe + hyphen
-    const ok = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(trimmed);
-    return ok ? "" : `${label} should not include numbers or special characters.`;
-  };
-  
-  
   return (
     <div className="auth-page-root">
       <Navbar />
@@ -200,8 +175,8 @@ const CustomerRegisterPage: React.FC = () => {
 
             {error && <p className="auth-error">{error}</p>}
 
-            <button type="submit" className="auth-button">
-              Create Customer Account
+            <button type="submit" className="auth-button" disabled={isLoading}>
+              {isLoading ? "Creating account..." : "Create Customer Account"}
             </button>
           </form>
 
