@@ -9,4 +9,8 @@ router.post('/register', registrationLimiter, validateRegister, authController.r
 router.post('/login', loginLimiter, validateLogin, authController.login);
 router.get('/profile', authenticate, authController.getProfile);
 
+// Email verification routes
+router.get('/verify-email/:token', authController.verifyEmail);
+router.post('/resend-verification', authController.resendVerification);
+
 module.exports = router;
