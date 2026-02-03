@@ -29,3 +29,19 @@ router.get('/profile', authenticate, requireRole('vendor'), async (req, res) => 
 });
 
 module.exports = router;
+// Public: get all vendors (for homepage)
+router.get('/', async (req, res) => {
+  try {
+    const vendors = await Vendor.getAllPublic(); // or Vendor.findAll()
+    res.json({
+      status: 'success',
+      data: vendors
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch vendors'
+    });
+  }
+});
