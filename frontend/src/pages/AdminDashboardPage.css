@@ -1,0 +1,150 @@
+.admin-page-root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f3f4f6;
+  }
+  
+  .admin-main {
+    flex: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
+  
+  .admin-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .admin-header p {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-bottom: 1.75rem;
+  }
+  
+  .admin-section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .admin-vendor-table {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .admin-vendor-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 2fr;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.45rem 0.25rem;
+    font-size: 0.9rem;
+  }
+  
+  .admin-vendor-row--head {
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 0.25rem;
+  }
+  
+  .admin-actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+  
+  .admin-btn {
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease,
+      box-shadow 0.15s ease;
+  }
+  
+  .admin-btn--approve {
+    background: #10b981;
+    color: #ffffff;
+  }
+  
+  .admin-btn--approve:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.35);
+  }
+  .admin-stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .admin-stat-card {
+    background: #ffffff;
+    border-radius: 0.9rem;
+    padding: 0.9rem 1.1rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+    min-width: 150px;
+  }
+  
+  .admin-stat-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+  
+  .admin-stat-value {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-top: 0.1rem;
+  }
+  
+  .admin-category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .admin-category-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.9rem;
+  }
+  
+  .admin-category-count {
+    color: #6b7280;
+  }
+  
+  
+  .admin-btn--danger {
+    background: #ef4444;
+    color: #ffffff;
+  }
+  
+  .admin-btn--danger:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35);
+  }
+  
+  @media (max-width: 768px) {
+    .admin-vendor-row {
+      grid-template-columns: 1.7fr 1.2fr;
+      grid-template-rows: auto auto;
+    }
+  
+    .admin-vendor-row span:nth-child(3),
+    .admin-vendor-row span:nth-child(4) {
+      margin-top: 0.25rem;
+    }
+  }
+  

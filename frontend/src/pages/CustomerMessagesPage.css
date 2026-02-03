@@ -1,0 +1,11 @@
+.customer-message-replies {
+    margin-top: 1rem;
+    padding-left: 1rem;
+    border-left: 3px solid #e5e7eb;
+  }
+  
+  .customer-message-reply {
+    color: #1f2937;
+    margin-bottom: 0.4rem;
+  }
+  

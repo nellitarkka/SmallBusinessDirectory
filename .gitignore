@@ -1,0 +1,10 @@
+# macOS system file
+.DS_Store
+
+# local environment variables
+database/.env
+
+#personal -me
+notes/
+node_modules/
+frontend/.env
