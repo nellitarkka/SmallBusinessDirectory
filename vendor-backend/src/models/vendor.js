@@ -35,6 +35,14 @@ const Vendor = {
 
   async getAllPublic(limit = 50, offset = 0) {
     try {
+      // Validate and sanitize inputs
+      limit = parseInt(limit, 10);
+      offset = parseInt(offset, 10);
+      
+      if (!Number.isFinite(limit) || limit <= 0) limit = 50;
+      if (!Number.isFinite(offset) || offset < 0) offset = 0;
+      if (limit > 100) limit = 100; // Max limit
+      
       const query = `
         SELECT 
           v.id,
