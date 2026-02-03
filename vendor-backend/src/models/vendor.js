@@ -53,7 +53,7 @@ const Vendor = {
           u.last_name
         FROM vendors v
         JOIN users u ON u.id = v.user_id
-        WHERE v.is_email_verified = true
+        WHERE v.is_verified = true
         ORDER BY v.created_at DESC
         LIMIT $1 OFFSET $2
       `;
