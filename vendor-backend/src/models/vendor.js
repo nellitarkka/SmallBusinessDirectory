@@ -31,6 +31,37 @@ const Vendor = {
     } catch (error) {
       throw error;
     }
+  },
+
+  async getAllPublic(limit = 50, offset = 0) {
+    try {
+      // Validate and sanitize inputs
+      limit = parseInt(limit, 10);
+      offset = parseInt(offset, 10);
+      
+      if (!Number.isFinite(limit) || limit <= 0) limit = 50;
+      if (!Number.isFinite(offset) || offset < 0) offset = 0;
+      if (limit > 100) limit = 100; // Max limit
+      
+      const query = `
+        SELECT 
+          v.id,
+          v.business_name,
+          v.city,
+          v.created_at,
+          u.first_name,
+          u.last_name
+        FROM vendors v
+        JOIN users u ON u.id = v.user_id
+        WHERE v.is_email_verified = true
+        ORDER BY v.created_at DESC
+        LIMIT $1 OFFSET $2
+      `;
+      const result = await pool.query(query, [limit, offset]);
+      return result.rows;
+    } catch (error) {
+      throw new Error(`Vendor.getAllPublic: ${error.message}`);
+    }
   }
 };
 
