@@ -9,7 +9,13 @@ const app = express();
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://smallbusinessdirectory-frontend.pages.dev'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 // Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
