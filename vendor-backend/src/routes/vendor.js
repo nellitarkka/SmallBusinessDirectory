@@ -34,10 +34,13 @@ router.get('/profile', authenticate, requireRole('vendor'), async (req, res) => 
 /**
  * GET /
  * Public: get all vendors (for homepage)
+ * Query params: limit (default 50), offset (default 0)
  */
 router.get('/', async (req, res) => {
   try {
-    const vendors = await Vendor.getAllPublic(); // or Vendor.findAll()
+    const { limit, offset } = req.query;
+    
+    const vendors = await Vendor.getAllPublic(limit, offset);
 
     res.json({
       status: 'success',

@@ -48,7 +48,6 @@ const Vendor = {
           v.id,
           v.business_name,
           v.city,
-          v.vat_number,
           v.created_at,
           u.first_name,
           u.last_name
