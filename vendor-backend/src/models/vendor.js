@@ -31,6 +31,26 @@ const Vendor = {
     } catch (error) {
       throw error;
     }
+  },
+
+  async getAllPublic() {
+    try {
+      const query = `
+        SELECT 
+          v.*,
+          u.email,
+          u.first_name,
+          u.last_name
+        FROM vendors v
+        JOIN users u ON u.id = v.user_id
+        WHERE u.is_email_verified = true
+        ORDER BY v.created_at DESC
+      `;
+      const result = await pool.query(query);
+      return result.rows;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 
