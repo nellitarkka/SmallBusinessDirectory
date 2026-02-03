@@ -111,10 +111,6 @@ Environment variables are used to securely configure database access, authentica
 All files related to the MVP can be found in the [deliverable-II](https://github.com/nellitarkka/SmallBusinessDirectory/tree/deliverable-II) branch
 , as well as README files in the respective folders that describe how to set up the database and how to run the frontend and backend.
 
-
-
-## Individual Contributions
-
 ### Berin Venedik:
 
 #### Deliverable I – Requirements Engineering
@@ -137,7 +133,33 @@ All files related to the MVP can be found in the [deliverable-II](https://github
 - Acted as the primary contributor for all frontend-related development and coordination.
 - Contributed to the preparation and structuring of project presentations.
 - Ensured consistency across requirements, implementation, documentation, and presentation materials.
-> main
+
+### Tun Wellens:
+
+#### Deliverable I – Requirements Engineering & UML Modeling
+- Designed and implemented UML class and sequence diagrams to formalize system structure and behavioral flows.
+- Contributed to requirements clarification and system modeling activities.
+- Translated stakeholder requirements into detailed UML diagrams supporting subsequent design and implementation phases.
+
+#### Deliverable II – Image Upload Feature & Frontend-Backend Integration
+- Implemented the complete image upload functionality for vendor listings, including file handling, validation, and storage integration.
+- Refactored frontend data stores and service layer to establish proper integration with backend API endpoints.
+- Implemented additional backend routes and debugged API contract mismatches to ensure consistent communication between frontend and backend.
+- Conducted extensive integration work to establish functional communication between all system layers.
+- Ensured seamless transition from prototype to a fully functional, API-driven application across all features.
+
+#### Deliverable III – End-to-End Testing & Refactoring
+- Conducted comprehensive end-to-end testing across all system features to validate functionality and identify edge cases.
+- Performed significant refactoring work to improve code consistency, maintainability, and alignment across frontend and backend.
+- Removed dead code, unused imports, and redundant logic to improve overall code quality.
+- Restructured inconsistent patterns and naming conventions to establish unified coding standards throughout the application.
+- Improved error handling and validation logic to ensure robust system behavior.
+
+#### Collaboration & System Integration
+- Played a critical role in system integration, ensuring seamless communication between frontend, backend, and database layers.
+- Identified and resolved architectural and implementation issues that prevented system functionality.
+- Collaborated with team members to establish working API contracts and integration standards.
+- Supported overall system stability and correctness through iterative testing and refinement.
 
 ### Nelli Tarkka:
 
