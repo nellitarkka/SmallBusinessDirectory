@@ -273,7 +273,12 @@ export const messagesAPI = {
   send: (recipientId: number, content: string, listingId?: number, subject?: string) =>
     apiCall('/messages', {
       method: 'POST',
-      body: JSON.stringify({ recipient_id: recipientId, content, listing_id: listingId, subject }),
+      body: JSON.stringify({ 
+        recipientId, 
+        content, 
+        listingId, 
+        subject: subject || 'General Inquiry' 
+      }),
     }),
 
   getInbox: () => apiCall('/messages/inbox'),

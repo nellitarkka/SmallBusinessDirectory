@@ -3,8 +3,8 @@ const Message = require('../models/message');
 // Send a new message
 exports.sendMessage = async (req, res) => {
   try {
-    const senderId = req.user.id;
-    const { recipient_id, listing_id, subject, content } = req.body;
+    const senderId = req.user.userId;
+    const { recipientId, listingId, subject, content } = req.body;
 
     if (!recipientId || !content) {
       return res.status(400).json({
