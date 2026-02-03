@@ -73,6 +73,15 @@ tests/
 Together, these documents provide a complete overview of the database layer, its evolution across deliverables, and the testing performed to validate its behavior.
 
 ---
+## Deployment
+
+The application follows a three-tier architecture and is fully deployed using free cloud platforms.  
+The frontend, built with Vite and React, is deployed on Cloudflare Pages, providing fast global static hosting. The backend, implemented with Node.js and Express, is deployed as a web service on Render. It connects to a PostgreSQL database hosted on Supabase and integrates email functionality via Gmail SMTP.
+
+Environment variables are used to securely configure database access, authentication secrets, and API communication between the frontend and backend. The deployed system is fully functional and publicly accessible.
+
+- Frontend: https://smallbusinessdirectory-frontend.pages.dev  
+- Backend API: https://smallbusinessdirectory-backend.onrender.com
 
 ## Individual Contributions
 
@@ -129,3 +138,28 @@ All files related to the MVP can be found in the [deliverable-II](https://github
 - Contributed to the preparation and structuring of project presentations.
 - Ensured consistency across requirements, implementation, documentation, and presentation materials.
 > main
+
+### Nelli Tarkka:
+
+#### Deliverable I – Requirements Engineering
+- Contributed to the creation and refinement of system documentation through the design of high-level architectural and conceptual diagrams.
+- Developed diagrams illustrating system components, data flow, and interactions between the frontend, backend, and database.
+- Supported the clarification of system scope and structure by visually modeling key functional elements and their relationships.
+
+#### Deliverable II – Authentication & Login Functionality
+- Contributed to the Implementing and configuring the user authentication and login functionality of the application.
+- Worked on integrating secure login flows between the frontend and backend, ensuring correct handling of user credentials and authentication logic.
+- Ensured that authentication-related features were correctly connected to backend endpoints and aligned with system requirements.
+
+#### Deliverable III – Deployment & System Configuration
+- Took full responsibility for deploying the complete application.
+- Deployed the backend as a Node.js web service on Render and the frontend as a static application on Cloudflare Pages.
+- Configured environment variables for secure communication between frontend, backend, database, and email services.
+- Connected the backend to the Supabase PostgreSQL database and set up email functionality using SMTP.
+- Verified that the deployed system was fully functional, publicly accessible, and ready for demonstration and evaluation.
+
+#### Collaboration & Presentation
+- Actively collaborated with team members throughout all project phases, particularly during system design, implementation, and deployment stages.
+- Communicated deployment requirements, configuration details, and technical constraints to ensure smooth integration between frontend, backend, and database components.
+- Supported the preparation and refinement of project documentation and presentation materials, with a focus on deployment architecture and system setup.
+- Assisted in ensuring consistency between implemented features, technical documentation, and the final project presentation.
