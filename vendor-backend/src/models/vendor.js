@@ -33,23 +33,27 @@ const Vendor = {
     }
   },
 
-  async getAllPublic() {
+  async getAllPublic(limit = 50, offset = 0) {
     try {
       const query = `
         SELECT 
-          v.*,
-          u.email,
+          v.id,
+          v.business_name,
+          v.city,
+          v.vat_number,
+          v.created_at,
           u.first_name,
           u.last_name
         FROM vendors v
         JOIN users u ON u.id = v.user_id
         WHERE u.is_email_verified = true
         ORDER BY v.created_at DESC
+        LIMIT $1 OFFSET $2
       `;
-      const result = await pool.query(query);
+      const result = await pool.query(query, [limit, offset]);
       return result.rows;
     } catch (error) {
-      throw error;
+      throw new Error(`Vendor.getAllPublic: ${error.message}`);
     }
   }
 };
