@@ -2,7 +2,7 @@
 import { type FormEvent, useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import "./VendorDashboardPage.css";
-import { listingsAPI, vendorAPI, API_ORIGIN } from "../services/api";
+import { listingsAPI, vendorAPI, API_ORIGIN, authAPI } from "../services/api";
 import { useAuth } from "../auth/AuthContext";
 
 interface Listing {
@@ -40,6 +40,9 @@ const VendorDashboardPage: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [resendError, setResendError] = useState("");
 
   const MAX_TITLE = 80;
   const MAX_CITY = 60;
@@ -106,6 +109,32 @@ const VendorDashboardPage: React.FC = () => {
       setSubmitError(err instanceof Error ? err.message : 'Failed to load listings');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsResendingVerification(true);
+    setResendError("");
+    setResendMessage("");
+
+    try {
+      if (!user?.email) {
+        setResendError("Email not found. Please log in again.");
+        return;
+      }
+
+      const response = await authAPI.resendVerification(user.email);
+      if (response.status === 'success') {
+        setResendMessage("Verification email sent! Please check your inbox.");
+        // Clear message after 5 seconds
+        setTimeout(() => setResendMessage(""), 5000);
+      } else {
+        setResendError(response.message || "Failed to resend verification email");
+      }
+    } catch (err) {
+      setResendError(err instanceof Error ? err.message : "Failed to resend verification email");
+    } finally {
+      setIsResendingVerification(false);
     }
   };
 
@@ -352,9 +381,34 @@ const VendorDashboardPage: React.FC = () => {
               background: "#f8d7da",
               border: "1px solid #f5c6cb",
               color: "#721c24",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "1rem",
             }}
           >
-            <strong>Account not verified.</strong> You can create and edit drafts, but you must be verified before submitting for review.
+            <div>
+              <strong>Account not verified.</strong> You can create and edit drafts, but you must be verified before submitting for review.
+              {resendMessage && <p style={{ color: "green", margin: "0.5rem 0 0 0", fontSize: "0.9rem" }}>{resendMessage}</p>}
+              {resendError && <p style={{ color: "#721c24", margin: "0.5rem 0 0 0", fontSize: "0.9rem" }}>{resendError}</p>}
+            </div>
+            <button
+              onClick={handleResendVerification}
+              disabled={isResendingVerification}
+              style={{
+                padding: "0.5rem 1rem",
+                backgroundColor: "#721c24",
+                color: "white",
+                border: "none",
+                borderRadius: 4,
+                cursor: isResendingVerification ? "not-allowed" : "pointer",
+                opacity: isResendingVerification ? 0.6 : 1,
+                whiteSpace: "nowrap",
+                fontSize: "0.9rem",
+              }}
+            >
+              {isResendingVerification ? "Sending..." : "Resend Email"}
+            </button>
           </div>
         )}
         {isLoading ? (

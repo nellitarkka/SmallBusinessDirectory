@@ -124,7 +124,13 @@ export const authAPI = {
       method: 'GET',
     });
   },
-  
+
+  resendVerification: async (email: string) => {
+    return await apiCall('/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
 
   logout: () => {
     localStorage.removeItem('token');
