@@ -10,9 +10,8 @@ import CustomerDashboardPage from "./pages/CustomerDashboardPage";
 import VendorDashboardPage from "./pages/VendorDashboardPage";
 import CustomerMyVendorsPage from "./pages/CustomerMyVendorsPage";
 import VendorDetailPage from "./pages/VendorDetailPage";
-import CustomerMessagesPage from "./pages/CustomerMessagesPage";
+import ChatMessagesPage from "./pages/ChatMessagesPage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
-import VendorInboxPage from "./pages/VendorInboxPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 function App() {
@@ -40,9 +39,10 @@ function App() {
       {/* others */}
       <Route path="/customer/my-vendors" element={<CustomerMyVendorsPage />} />
       <Route path="/vendors/:id" element={<VendorDetailPage />} />
-      <Route path="/customer/messages" element={<CustomerMessagesPage />} />
+      <Route path="/customer/messages" element={<ChatMessagesPage />} />
+      <Route path="/vendor/messages" element={<ChatMessagesPage />} />
       <Route path="/customer/profile" element={<CustomerProfilePage />} />
-      <Route path="/vendor/inbox" element={<VendorInboxPage />} />
+      <Route path="/vendor/inbox" element={<ChatMessagesPage />} />
     </Routes>
   );
 }
