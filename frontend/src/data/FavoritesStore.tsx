@@ -31,7 +31,7 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await favoritesAPI.getAll();
       if (response.status === 'success') {
-        const ids = response.data.favorites.map((fav: any) => fav.listing_id);
+        const ids = response.data.favorites.map((fav: any) => Number(fav.listing_id));
         setFavoriteVendorIds(ids);
       }
     } catch (err) {
