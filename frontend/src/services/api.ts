@@ -226,7 +226,7 @@ export const listingsAPI = {
 export const vendorAPI = {
   // Get vendor profile
   getProfile: async () => {
-    return await apiCall('/vendor/profile');
+    return await apiCall('/vendors/profile');
   },
 };
 
