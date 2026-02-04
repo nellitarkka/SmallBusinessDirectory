@@ -4,19 +4,13 @@ import { usePublicListings } from "../data/PublicListingsStore";
 import { useFavorites } from "../data/FavoritesStore";
 import type { Vendor } from "../data/vendors";
 import "./CustomerDashboardPage.css";
-import { useMessages } from "../data/MessagesStore";
 import { useNavigate } from "react-router-dom";
 import { authAPI } from "../services/api";
 import { useAuth } from "../auth/AuthContext";
 
-type VendorId = Vendor["id"];
-
 const CustomerDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [expandedVendorId, setExpandedVendorId] = useState<VendorId | null>(
-    null
-  );
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
@@ -24,12 +18,7 @@ const CustomerDashboardPage: React.FC = () => {
 
   const { listings: vendors } = usePublicListings();
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { sendMessage } = useMessages();
   
-  const [messageText, setMessageText] = useState("");
-
-  const approvedVendors = vendors;
-
   const normalizedSearch = search.toLowerCase();
   const navigate = useNavigate();
 
@@ -74,15 +63,11 @@ const CustomerDashboardPage: React.FC = () => {
     }
   };
 
-  const handleToggleExpand = (id: VendorId) => {
-    setExpandedVendorId((prev) => (prev === id ? null : id));
-  };
-
   const handleViewDetails = (id: Vendor["id"]) => {
     navigate(`/vendors/${id}`);
   };
 
-  const filteredVendors = approvedVendors.filter((vendor) => {
+  const filteredVendors = vendors.filter((vendor) => {
     if (!normalizedSearch) return true;
     const combined = `
       ${vendor.name || ""}
@@ -92,46 +77,6 @@ const CustomerDashboardPage: React.FC = () => {
     `.toLowerCase();
     return combined.includes(normalizedSearch);
   });
-
-  const handleSendMessage = async (vendor: Vendor) => {
-    if (!messageText.trim()) {
-      alert("Please type a message before sending.");
-      return;
-    }
-
-    try {
-      if (!vendor.vendorUserId) {
-        alert("This vendor cannot receive messages yet.");
-        return;
-      }
-
-      await sendMessage(
-        Number(vendor.vendorUserId),
-        messageText.trim(),
-        Number(vendor.id),
-        undefined
-      );
-
-      setMessageText("");
-      alert("Your message has been sent.");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to send message");
-    }
-  };
-
-  const handleContactEmail = (vendor: Vendor) => {
-    const email = vendor.email || "vendor@example.com";
-    const subject = encodeURIComponent("Customer inquiry from Local Vendor Hub");
-    const body = encodeURIComponent(
-      `Hi ${vendor.name},\n\nI am interested in your services.\n\nBest regards,`
-    );
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-  };
-
-  const handleCallVendor = (vendor: Vendor) => {
-    const phone = vendor.phone || "+0000000000";
-    window.location.href = `tel:${phone}`;
-  };
 
   return (
     <div className="customer-page-root">
@@ -202,7 +147,6 @@ const CustomerDashboardPage: React.FC = () => {
           ) : (
             <div className="customer-vendor-grid">
               {filteredVendors.map((vendor) => {
-                const isExpanded = expandedVendorId === vendor.id;
                 const favorite = isFavorite(Number(vendor.id));
 
                 return (
@@ -243,7 +187,7 @@ const CustomerDashboardPage: React.FC = () => {
                       </p>
                     )}
 
-                    {/* ✅ Actions row: View Details + View/Hide contact options */}
+                    {/* ✅ Actions row: View Details */}
                     <div className="customer-card-actions">
                       <button
                         className="vendor-card-btn"
@@ -251,53 +195,8 @@ const CustomerDashboardPage: React.FC = () => {
                       >
                         View Details
                       </button>
-
-                      <button
-                        className="vendor-card-btn"
-                        onClick={() => handleToggleExpand(vendor.id)}
-                      >
-                        {isExpanded ? "Hide contact options" : "View contact options"}
-                      </button>
                     </div>
 
-                    {isExpanded && (
-                      <div className="customer-vendor-contact">
-                        <p className="customer-contact-title">
-                          Contact {vendor.name}
-                        </p>
-
-                        <textarea
-                          className="customer-message-textarea"
-                          placeholder="Write a message to the vendor..."
-                          value={messageText}
-                          onChange={(e) => setMessageText(e.target.value)}
-                          rows={3}
-                        />
-
-                        <div className="customer-contact-buttons">
-                          <button
-                            className="contact-btn contact-btn--primary"
-                            onClick={() => handleContactEmail(vendor)}
-                          >
-                            Contact via email
-                          </button>
-
-                          <button
-                            className="contact-btn contact-btn--primary"
-                            onClick={() => handleSendMessage(vendor)}
-                          >
-                            Send message
-                          </button>
-
-                          <button
-                            className="contact-btn contact-btn--outline"
-                            onClick={() => handleCallVendor(vendor)}
-                          >
-                            Call vendor
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </article>
                 );
               })}
