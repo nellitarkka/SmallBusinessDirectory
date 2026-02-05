@@ -5,7 +5,7 @@ const path = require('path');
 // Create a new listing (vendor only)
 exports.create = async (req, res) => {
   try {
-    const { title, description, city, contactEmail, contactPhone, openingHours, categoryIds } = req.body;
+    const { title, description, city, contactEmail, contactPhone, openingHours, categoryIds, status } = req.body;
     
     // Get vendor profile
     const vendor = await Vendor.findByUserId(req.user.userId);
@@ -16,14 +16,15 @@ exports.create = async (req, res) => {
       });
     }
     
-    // Create listing
+    // Create listing with status (default to 'draft' if not provided)
     const listing = await Listing.create(vendor.id, {
       title,
       description,
       city,
       contactEmail,
       contactPhone,
-      openingHours
+      openingHours,
+      status: status || 'draft'
     });
     
     // Add categories if provided
@@ -88,7 +89,7 @@ exports.getAllAdmin = async (req, res) => {
 exports.updateStatusAdmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, rejection_reason } = req.body;
     
     // Validate status - admin can set to active or rejected
     const validStatuses = ['active', 'rejected'];
@@ -99,8 +100,14 @@ exports.updateStatusAdmin = async (req, res) => {
       });
     }
     
-    // Update status
-    const updatedListing = await Listing.update(id, { status });
+    // Build update data
+    const updateData = { status };
+    if (status === 'rejected' && rejection_reason) {
+      updateData.rejection_reason = rejection_reason;
+    }
+    
+    // Update status (and rejection reason if provided)
+    const updatedListing = await Listing.update(id, updateData);
     
     if (!updatedListing) {
       return res.status(404).json({
@@ -173,23 +180,17 @@ exports.update = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.userId;
     
-    console.log(`[UPDATE] Listing ${id} by user ${userId}`);
-    
     // Check if listing exists and belongs to this vendor
     const listing = await Listing.findByIdWithVendor(id);
     
     if (!listing) {
-      console.log(`[UPDATE] Listing ${id} not found`);
       return res.status(404).json({ 
         status: 'error', 
         message: 'Listing not found' 
       });
     }
-    
-    console.log(`[UPDATE] Listing vendor_user_id: ${listing.vendor_user_id}, req.user.userId: ${userId}`);
-    
+
     if (listing.vendor_user_id !== userId) {
-      console.log(`[UPDATE] Permission denied - listing belongs to user ${listing.vendor_user_id}`);
       return res.status(403).json({ 
         status: 'error', 
         message: 'You do not have permission to update this listing' 
@@ -206,11 +207,18 @@ exports.update = async (req, res) => {
     if (req.body.contactPhone !== undefined) updateData.contact_phone = req.body.contactPhone;
     if (req.body.openingHours !== undefined) updateData.opening_hours = req.body.openingHours;
     if (req.body.status !== undefined) updateData.status = req.body.status;
-    
-    console.log(`[UPDATE] Updating with data:`, updateData);
+
+    if (req.body.status === undefined && listing.status === 'active') {
+      updateData.status = 'submitted';
+    }
     
     // Update listing with only provided fields
     const updatedListing = await Listing.update(id, updateData);
+
+    if (req.body.categoryIds !== undefined) {
+      await Listing.removeCategories(id);
+      await Listing.addCategories(id, req.body.categoryIds);
+    }
     
     // Update categories if provided
     if (req.body.categoryIds !== undefined) {

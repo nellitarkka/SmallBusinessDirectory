@@ -165,6 +165,7 @@ export const listingsAPI = {
     contactEmail?: string;
     openingHours?: string;
     categoryIds?: number[];
+    status?: 'draft' | 'submitted';
   }) => {
     return await apiCall('/listings', {
       method: 'POST',

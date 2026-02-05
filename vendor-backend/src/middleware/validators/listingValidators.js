@@ -48,12 +48,20 @@ const validateCreateListing = [
   
   body('categoryIds')
     .isArray({ min: 1 }).withMessage('At least one category is required')
+    .customSanitizer((value) => {
+      // Convert all elements to integers
+      return value.map(id => parseInt(id, 10));
+    })
     .custom((value) => {
       if (!value.every(id => Number.isInteger(id) && id > 0)) {
         throw new Error('Category IDs must be positive integers');
       }
       return true;
     }),
+  
+  body('status')
+    .optional()
+    .isIn(['draft', 'submitted']).withMessage('Status must be either draft or submitted'),
   
   handleValidationErrors
 ];
@@ -94,11 +102,15 @@ const validateUpdateListing = [
   
   body('status')
     .optional()
-    .isIn(['pending', 'approved', 'rejected']).withMessage('Invalid status value'),
+    .isIn(['draft', 'submitted', 'active', 'rejected']).withMessage('Invalid status value'),
   
   body('categoryIds')
     .optional()
     .isArray().withMessage('Category IDs must be an array')
+    .customSanitizer((value) => {
+      // Convert all elements to integers
+      return value ? value.map(id => parseInt(id, 10)) : value;
+    })
     .custom((value) => {
       if (value && !value.every(id => Number.isInteger(id) && id > 0)) {
         throw new Error('Category IDs must be positive integers');

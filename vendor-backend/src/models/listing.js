@@ -4,15 +4,15 @@ const Listing = {
   // Create a new listing
   async create(vendorId, data) {
     try {
-      const { title, description, city, contactEmail, contactPhone, openingHours } = data;
+      const { title, description, city, contactEmail, contactPhone, openingHours, status } = data;
       
       const query = `
         INSERT INTO listings (vendor_id, title, description, city, contact_email, contact_phone, opening_hours, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `;
       
-      const values = [vendorId, title, description, city, contactEmail, contactPhone, openingHours];
+      const values = [vendorId, title, description, city, contactEmail, contactPhone, openingHours, status || 'draft'];
       const result = await pool.query(query, values);
       
       return result.rows[0];
@@ -72,7 +72,55 @@ const Listing = {
   // Get all listings for a vendor
   async findByVendorUserId(userId) {
     try {
-      const query = 'SELECT * FROM vendor_listings_view WHERE vendor_user_id = $1 ORDER BY created_at DESC';
+      const query = `
+        SELECT
+          l.id AS listing_id,
+          l.vendor_id,
+          v.user_id AS vendor_user_id,
+          v.business_name,
+          l.title,
+          l.description,
+          l.city,
+          l.contact_email,
+          l.contact_phone,
+          l.opening_hours,
+          l.status,
+          l.image_url,
+          l.rejection_reason,
+          l.created_at,
+          l.updated_at,
+          COALESCE(fav_counts.favorite_count, 0) AS favorite_count,
+          ARRAY_REMOVE(ARRAY_AGG(c.id ORDER BY c.id), NULL) AS category_ids,
+          ARRAY_REMOVE(ARRAY_AGG(c.name ORDER BY c.name), NULL) AS categories
+        FROM listings l
+        JOIN vendors v ON l.vendor_id = v.id
+        LEFT JOIN listing_categories lc ON lc.listing_id = l.id
+        LEFT JOIN categories c ON c.id = lc.category_id
+        LEFT JOIN (
+          SELECT listing_id, COUNT(*) AS favorite_count
+          FROM favorites
+          GROUP BY listing_id
+        ) AS fav_counts ON fav_counts.listing_id = l.id
+        WHERE v.user_id = $1
+        GROUP BY
+          l.id,
+          l.vendor_id,
+          v.user_id,
+          v.business_name,
+          l.title,
+          l.description,
+          l.city,
+          l.contact_email,
+          l.contact_phone,
+          l.opening_hours,
+          l.status,
+          l.image_url,
+          l.rejection_reason,
+          l.created_at,
+          l.updated_at,
+          fav_counts.favorite_count
+        ORDER BY l.created_at DESC
+      `;
       const result = await pool.query(query, [userId]);
       // Map listing_id to id for consistency with frontend
       return result.rows.map(row => ({
@@ -87,7 +135,7 @@ const Listing = {
   // Update a listing
   async update(id, data) {
     try {
-      const allowedFields = ['title', 'description', 'city', 'contact_email', 'contact_phone', 'opening_hours', 'status', 'image_url'];
+      const allowedFields = ['title', 'description', 'city', 'contact_email', 'contact_phone', 'opening_hours', 'status', 'image_url', 'rejection_reason'];
       const updates = [];
       const values = [];
       let paramCount = 1;

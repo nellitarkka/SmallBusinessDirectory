@@ -7,9 +7,11 @@
   
   .vendor-main {
     flex: 1;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem 1.5rem 3rem;
+    padding: 2rem 2rem 3rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .vendor-header h1 {
@@ -25,7 +27,7 @@
   
   .vendor-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: 1.75rem;
     align-items: flex-start;
   }
