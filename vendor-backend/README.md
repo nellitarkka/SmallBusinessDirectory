@@ -46,6 +46,7 @@ Create a `.env` file in the root directory:
 ```env
 PORT=3000
 DATABASE_URL=your_postgresql_connection_string
+FRONTEND_URL=http://localhost:5173
 JWT_SECRET=your_jwt_secret_key
 NODE_ENV=development
 EMAIL_HOST=smtp.gmail.com
