@@ -70,6 +70,15 @@ tests/
 Together, these documents provide a complete overview of the database layer, its evolution across deliverables, and the testing performed to validate its behavior.
 
 ---
+## Frontend Structure
+
+The frontend folder structure and component organization are documented in: 
+```
+frontend/README.md
+```
+
+---
+
 ## Deployment
 
 The application follows a three-tier architecture and is fully deployed using free cloud platforms.  
