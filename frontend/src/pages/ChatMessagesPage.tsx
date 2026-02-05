@@ -31,7 +31,6 @@ const ChatMessagesPage: React.FC = () => {
   useEffect(() => {
     fetchInbox();
     fetchSent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Scroll to bottom when messages change
