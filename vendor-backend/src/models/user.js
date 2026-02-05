@@ -75,12 +75,12 @@ const User = {
   
       const query = includePasswordHash
         ? `
-          SELECT id, email, role, first_name, last_name, password_hash, created_at, updated_at 
+          SELECT id, email, role, first_name, last_name, password_hash, is_email_verified, created_at, updated_at 
           FROM users 
           WHERE id = $1
         `
         : `
-          SELECT id, email, role, first_name, last_name, created_at, updated_at 
+          SELECT id, email, role, first_name, last_name, is_email_verified, created_at, updated_at 
           FROM users 
           WHERE id = $1
         `;

@@ -282,8 +282,8 @@ export const messagesAPI = {
       body: JSON.stringify({ 
         recipientId, 
         content, 
-        listingId, 
-        subject: subject || 'General Inquiry' 
+        ...(listingId ? { listingId } : {}),
+        ...(subject ? { subject } : {}),
       }),
     }),
 

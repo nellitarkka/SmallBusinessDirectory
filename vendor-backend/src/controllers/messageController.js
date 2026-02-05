@@ -6,13 +6,7 @@ exports.sendMessage = async (req, res) => {
     const senderId = req.user.userId;
     const { recipientId, listingId, subject, content } = req.body;
 
-    if (!recipientId || !content) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Recipient ID and content are required'
-      });
-    }
-
+    // Validation middleware already checks recipientId and content are present
     const message = await Message.create(
       senderId,
       Number(recipientId),
@@ -27,9 +21,18 @@ exports.sendMessage = async (req, res) => {
     });
   } catch (error) {
     console.error('Send message error:', error);
+    
+    // Handle email verification error
+    if (error.code === '42501' || error.message === 'Email not verified') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You must verify your email before sending messages'
+      });
+    }
+    
     res.status(500).json({
       status: 'error',
-      message: error.message
+      message: error.message || 'Failed to send message'
     });
   }
 };

@@ -23,14 +23,14 @@ const validateSendMessage = [
     .isInt({ min: 1 }).withMessage('Listing ID must be a positive integer'),
   
   body('subject')
+    .optional()
     .trim()
-    .notEmpty().withMessage('Subject is required')
     .isLength({ min: 3, max: 100 }).withMessage('Subject must be 3-100 characters'),
   
   body('content')
     .trim()
     .notEmpty().withMessage('Message content is required')
-    .isLength({ min: 10, max: 2000 }).withMessage('Message must be 10-2000 characters'),
+    .isLength({ min: 1, max: 2000 }).withMessage('Message must be 1-2000 characters'),
   
   handleValidationErrors
 ];

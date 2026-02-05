@@ -55,6 +55,7 @@ export const MessagesProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Failed to send message:', error);
+      throw error; // Re-throw so the caller can handle it
     } finally {
       setIsLoading(false);
     }

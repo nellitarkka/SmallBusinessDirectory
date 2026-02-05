@@ -16,37 +16,60 @@ async function queryWithFallback(primarySql, fallbackSql, values) {
 }
 
 const Message = {
-  // Create a new message (match DB columns and alias expected names)
+  // Create a new message via database function (enforces email verification)
+  // Can be called in two ways:
+  // 1. With listingId: send_message() - automatically resolves vendor from listing
+  // 2. Without listingId: send_direct_message() - direct recipient for conversations
   create: async (senderId, recipientId, listingId, subject, content) => {
-    const primary = `
-      INSERT INTO messages (listing_id, sender_user_id, receiver_user_id, subject, body)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING 
-        id,
-        listing_id,
-        sender_user_id    AS sender_id,
-        receiver_user_id  AS recipient_id,
-        subject,
-        body              AS content,
-        created_at,
-        is_read           AS read
-    `;
-    const fallback = `
-      INSERT INTO messages (listing_id, sender_id, recipient_id, subject, content)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING 
-        id,
-        listing_id,
-        sender_id,
-        recipient_id,
-        subject,
-        content,
-        created_at,
-        read
-    `;
-    const values = [listingId || null, senderId, recipientId, subject || null, content];
-    const result = await queryWithFallback(primary, fallback, values);
-    return result.rows[0];
+    try {
+      let query;
+      let values;
+
+      if (listingId) {
+        // Use listing-based message (finds vendor from listing)
+        query = `SELECT public.send_message($1, $2, $3, $4) AS id`;
+        values = [senderId, listingId, subject || null, content];
+      } else if (recipientId) {
+        // Use direct message (for existing conversations)
+        query = `SELECT public.send_direct_message($1, $2, $3, $4) AS id`;
+        values = [senderId, recipientId, subject || null, content];
+      } else {
+        throw new Error('Either listing ID or recipient ID must be provided');
+      }
+
+      const result = await pool.query(query, values);
+      
+      if (!result.rows[0]) {
+        throw new Error('Failed to send message');
+      }
+
+      const messageId = result.rows[0].id;
+
+      // Fetch the created message to return
+      const fetchQuery = `
+        SELECT 
+          id,
+          listing_id,
+          sender_id,
+          recipient_id,
+          subject,
+          content,
+          created_at,
+          read
+        FROM messages
+        WHERE id = $1
+      `;
+      const fetchResult = await pool.query(fetchQuery, [messageId]);
+      return fetchResult.rows[0];
+    } catch (error) {
+      // Check if it's an email verification error
+      if (error.code === '42501' || error.message?.includes('Email not verified')) {
+        const err = new Error('Email not verified');
+        err.code = '42501';
+        throw err;
+      }
+      throw error;
+    }
   },
 
   // Get all messages for a user (inbox)

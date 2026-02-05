@@ -2,8 +2,13 @@
 import { type FormEvent, useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import "./VendorDashboardPage.css";
-import { listingsAPI, vendorAPI, API_ORIGIN, authAPI } from "../services/api";
+import { listingsAPI, vendorAPI, categoriesAPI, API_ORIGIN, authAPI } from "../services/api";
 import { useAuth } from "../auth/AuthContext";
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 interface Listing {
   id: number;
@@ -33,6 +38,7 @@ interface VendorProfile {
 const VendorDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +46,7 @@ const VendorDashboardPage: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
@@ -52,7 +59,7 @@ const VendorDashboardPage: React.FC = () => {
   const MAX_PHONE = 40;
 
   type FieldErrors = Partial<Record<
-    "title" | "city" | "description" | "contactEmail" | "contactPhone" | "openingHours",
+    "title" | "city" | "description" | "contactEmail" | "contactPhone" | "openingHours" | "categories",
     string
   >>;
 
@@ -74,6 +81,7 @@ const VendorDashboardPage: React.FC = () => {
     const initializeData = async () => {
       await fetchVendorProfile();
       await fetchMyListings();
+      await fetchCategories();
     };
     initializeData();
   }, []);
@@ -109,6 +117,19 @@ const VendorDashboardPage: React.FC = () => {
       setSubmitError(err instanceof Error ? err.message : 'Failed to load listings');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      console.log('Categories response:', response);
+      if (response.status === 'success' && response.data?.categories) {
+        setCategories(response.data.categories);
+        console.log('Categories set:', response.data.categories);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
     }
   };
 
@@ -191,6 +212,8 @@ const VendorDashboardPage: React.FC = () => {
     if (p && p.length > MAX_PHONE) errors.contactPhone = `Max ${MAX_PHONE} characters.`;
     if (oh && oh.length > MAX_OPENING) errors.openingHours = `Max ${MAX_OPENING} characters.`;
   
+    if (selectedCategoryIds.length === 0) errors.categories = "At least one category is required.";
+  
     return errors;
   };
   
@@ -216,6 +239,7 @@ const VendorDashboardPage: React.FC = () => {
         contactPhone,
         contactEmail: contactEmail || user?.email || "",
         openingHours,
+        categoryIds: selectedCategoryIds,
       });
       
       if (response.status === 'success') {
@@ -229,6 +253,7 @@ const VendorDashboardPage: React.FC = () => {
         setContactEmail(user?.email || "");
         setContactPhone("");
         setOpeningHours("");
+        setSelectedCategoryIds([]);
         setFieldErrors({});
       }
     } catch (err) {
@@ -548,6 +573,38 @@ const VendorDashboardPage: React.FC = () => {
                   </div>
                 )}
 
+              </div>
+
+              <div className="vendor-field">
+                <label className="vendor-label">Categories</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+                  {categories.length === 0 ? (
+                    <p style={{ color: "#666", fontSize: "0.9rem" }}>Loading categories...</p>
+                  ) : (
+                    categories.map((cat) => (
+                      <label key={cat.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedCategoryIds.includes(cat.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCategoryIds((prev) => [...prev, cat.id]);
+                            } else {
+                              setSelectedCategoryIds((prev) => prev.filter((id) => id !== cat.id));
+                            }
+                            setFieldErrors((prev) => ({ ...prev, categories: undefined }));
+                          }}
+                        />
+                        <span>{cat.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {fieldErrors.categories && (
+                  <div style={{ color: "#b00020", fontSize: "0.85rem", marginTop: 6 }}>
+                    {fieldErrors.categories}
+                  </div>
+                )}
               </div>
 
               {submitError && (

@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
 const authenticate = (req, res, next) => {
   try {
@@ -48,4 +49,44 @@ const requireRole = (...allowedRoles) => {
   };
 };
 
-module.exports = { authenticate, requireRole };
+// Check if user has verified their email
+const requireEmailVerification = async (req, res, next) => {
+  try {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
+    if (!user.is_email_verified) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You must verify your email before performing this action'
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Email verification check error:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+};
+
+module.exports = {
+  authenticate,
+  requireRole,
+  requireEmailVerification
+};
