@@ -80,8 +80,8 @@ The frontend, built with Vite and React, is deployed on Cloudflare Pages, provid
 
 Environment variables are used to securely configure database access, authentication secrets, and API communication between the frontend and backend. The deployed system is fully functional and publicly accessible.
 
-- Frontend: https://smallbusinessdirectory-frontend.pages.dev  
-- Backend API: https://smallbusinessdirectory-backend.onrender.com
+- Deployment links: http://smallbusinessdirectory.francecentral.cloudapp.azure.com
+                    http://20.199.16.127
 
 ## Individual Contributions
 
