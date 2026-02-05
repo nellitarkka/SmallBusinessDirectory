@@ -24,6 +24,7 @@ const ChatMessagesPage: React.FC = () => {
   const [inputSubject, setInputSubject] = useState("");
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch messages on mount - only once
@@ -112,6 +113,7 @@ const ChatMessagesPage: React.FC = () => {
     if (!inputMessage.trim() || !selectedUserId) return;
 
     setIsSending(true);
+    setSendError(null);
     try {
       await sendMessage(selectedUserId, inputMessage.trim(), undefined, inputSubject.trim() || undefined);
       setInputMessage("");
@@ -123,6 +125,8 @@ const ChatMessagesPage: React.FC = () => {
       await fetchSent();
     } catch (err) {
       console.error("Failed to send message:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to send message";
+      setSendError(errorMessage);
     } finally {
       setIsSending(false);
     }
@@ -224,6 +228,19 @@ const ChatMessagesPage: React.FC = () => {
 
                 {/* Input Area */}
                 <div className="chat-input-area">
+                  {sendError && (
+                    <div style={{
+                      padding: "0.75rem 1rem",
+                      marginBottom: "1rem",
+                      backgroundColor: "#f8d7da",
+                      border: "1px solid #f5c6cb",
+                      borderRadius: "4px",
+                      color: "#721c24",
+                      fontSize: "0.9rem"
+                    }}>
+                      {sendError}
+                    </div>
+                  )}
                   <div className="chat-input-wrapper">
                     <input
                       type="text"
