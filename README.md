@@ -36,13 +36,10 @@ This branch contains the source code and README files in the respective folders 
 
 ---
 
-## Evidence Pack
+## Architecture Overview
 
-This section aggregates QA and documentation evidence for the final release.
-
-- System test plan + regression checklist: [docs/TESTING.md](docs/TESTING.md)
-- Architecture overview: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- Deployment notes: [docs/DEPLOYMENT_AZURE.md](docs/DEPLOYMENT_AZURE.md)
+This document provides a high-level overview of the system architecture:
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ---
 
