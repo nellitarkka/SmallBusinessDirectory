@@ -13,9 +13,22 @@ A web-based Small Business Vendor Directory where vendors can post listings for 
 
 ---
 
+## Deployment
+
+The application follows a three-tier architecture and is fully deployed and operational.  
+Both the frontend (Vite + React) and backend (Node.js + Express) are containerized and deployed on an Azure Virtual Machine using Docker and docker-compose. The application connects to a PostgreSQL database hosted on Supabase and integrates email functionality via Gmail SMTP.
+
+Environment variables are used to securely configure database access, authentication secrets, and API communication between the frontend and backend. The deployed system is fully functional and publicly accessible.
+
+**Deployment Details:**
+- Frontend & Backend: Azure VM with Docker/docker-compose
+- Database: PostgreSQL on Supabase
+- Email: Gmail SMTP
+- Access links: http://smallbusinessdirectory.francecentral.cloudapp.azure.com , http://20.199.16.127
+
 ## Repository Structure & Documentation
 
-### Project Documentation
+### Project Documentation (Deliverable I)
 All analysis and design documents are available in the **Docs branch** of the repository:
 
 🔗 https://github.com/nellitarkka/SmallBusinessDirectory/tree/Docs  
@@ -23,8 +36,8 @@ All analysis and design documents are available in the **Docs branch** of the re
 Each document provides detailed information about specific aspects of the system analysis and design.  
 If a document does not render directly in GitHub’s preview, it can be downloaded and opened locally using any standard PDF reader.
 
-deliverable-III-database
-### MVP Implementation
+The Docs branch contains UML diagrams, requirement elicitation materials, use case stories, and other analysis/design artifacts. The main branch includes architecture and testing notes in the docs folder.
+### MVP Implementation (Deliverable II)
 All files related to the MVP implementation can be found in the **deliverable-II branch**:
 
 🔗 https://github.com/nellitarkka/SmallBusinessDirectory/tree/deliverable-II  
@@ -41,31 +54,28 @@ This branch contains the source code and README files in the respective folders 
 This document provides a high-level overview of the system architecture:
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
+Testing guidance and validation notes are documented here:
+- [docs/TESTING.md](docs/TESTING.md)
+
 ---
 
-## 📄 Database Documentation
+## Database Documentation
 
 Detailed documentation of the database design and implementation can be found in the following locations:
 
 ### Database Design & Schema (Deliverables II–III)
-```
-database/README.md
-```
+- [database/README.md](database/README.md)
 Describes the relational schema, core tables, relationships, SQL views, and database-level security and inquiry mechanisms.
 
 ### Database Migrations
-```
-database/migrations/
-```
+- [database/migrations](database/migrations)
 Contains all versioned SQL migrations used to evolve the database across deliverables, including security, messaging, and inquiry support.
 
 ### Database Testing & Validation
 - **Deliverable II** (schema and relational integrity):
-```
-tests/
-```
+- [database/tests](database/tests)
 - **Deliverable III** (security, messaging, and inquiry validation):
-```docs/database_manual_tests.md```
+- [database/docs/database_manual_tests.md](database/docs/database_manual_tests.md)
 
 Together, these documents provide a complete overview of the database layer, its evolution across deliverables, and the testing performed to validate its behavior.
 
@@ -73,20 +83,7 @@ Together, these documents provide a complete overview of the database layer, its
 ## Frontend Structure
 
 The frontend folder structure and component organization are documented in: 
-```
-frontend/README.md
-```
-
----
-
-## Deployment
-
-The application follows a three-tier architecture and is fully deployed using free cloud platforms.  
-The frontend, built with Vite and React, is deployed on Cloudflare Pages, providing fast global static hosting. The backend, implemented with Node.js and Express, is deployed as a web service on Render. It connects to a PostgreSQL database hosted on Supabase and integrates email functionality via Gmail SMTP.
-
-Environment variables are used to securely configure database access, authentication secrets, and API communication between the frontend and backend. The deployed system is fully functional and publicly accessible.
-
-- Deployment links: http://smallbusinessdirectory.francecentral.cloudapp.azure.com , http://20.199.16.127
+- [frontend/README.md](frontend/README.md)
 
 ## Individual Contributions
 
