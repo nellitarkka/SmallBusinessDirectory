@@ -207,6 +207,11 @@ export const listingsAPI = {
     return await apiCall('/listings/admin/all');
   },
 
+  // Get single listing as admin (any status)
+  getByIdAdmin: async (id: number | string) => {
+    return await apiCall(`/listings/admin/${id}`);
+  },
+
   // Update listing status (admin only)
   updateStatusAdmin: async (id: number | string,status: "active" | "rejected",rejectionReason?: string) => {
     return await apiCall(`/listings/admin/${id}/status`, {

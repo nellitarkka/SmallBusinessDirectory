@@ -1,7 +1,7 @@
 # System Testing & QA Evidence
 
 ## Purpose
-This document records system-level testing for the Small Business Directory application and provides a regression checklist with captured evidence.
+This document records system-level testing for the Small Business Directory application, providing a regression checklist with captured evidence. To ensure comprehensive coverage, backend and frontend components were validated through separate testing cycles.
 
 ## Environments
 - Azure: http://20.199.16.127 or http://smallbusinessdirectory.francecentral.cloudapp.azure.com

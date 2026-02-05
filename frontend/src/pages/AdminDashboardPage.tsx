@@ -4,9 +4,11 @@ import { listingsAPI } from "../services/api";
 import "./AdminDashboardPage.css";
 import type { Vendor } from "../data/vendors";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboardPage: React.FC = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const navigate = useNavigate();
 
   const mapListingToVendor = (l: any): Vendor => {
     const rawDups = l.possible_duplicates ?? l.possibleDuplicates ?? [];
@@ -102,6 +104,10 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const handleViewDetails = (id: number | string) => {
+    navigate(`/vendors/${id}`);
+  };
+
   return (
     <div className="admin-page-root">
       <Navbar />
@@ -174,6 +180,12 @@ const AdminDashboardPage: React.FC = () => {
                       >
                         Reject
                       </button>
+                      <button
+                        className="admin-btn"
+                        onClick={() => handleViewDetails(vendor.id)}
+                      >
+                        Preview
+                      </button>
                     </span>  
                   </div>
               
@@ -216,6 +228,7 @@ const AdminDashboardPage: React.FC = () => {
               <span>Category</span>
               <span>Location</span>
               <span>Status</span>
+              <span>Actions</span>
             </div>
 
             {approvedVendors.length === 0 ? (
@@ -229,6 +242,14 @@ const AdminDashboardPage: React.FC = () => {
                   <span>{vendor.category || "-"}</span>
                   <span>{vendor.location || "-"}</span>
                   <span>Approved</span>
+                  <span className="admin-actions">
+                    <button
+                      className="admin-btn"
+                      onClick={() => handleViewDetails(vendor.id)}
+                    >
+                      Preview
+                    </button>
+                  </span>
                 </div>
               ))
             )}
@@ -242,6 +263,7 @@ const AdminDashboardPage: React.FC = () => {
             <div className="admin-vendor-row admin-vendor-row--head">
               <span>Name</span>
               <span>Reason</span>
+              <span>Actions</span>
             </div>
 
             {rejectedVendors.length === 0 ? (
@@ -253,6 +275,14 @@ const AdminDashboardPage: React.FC = () => {
                 <div key={vendor.id} className="admin-vendor-row">
                   <span>{vendor.name}</span>
                   <span>{vendor.rejectionReason || "-"}</span>
+                  <span className="admin-actions">
+                    <button
+                      className="admin-btn"
+                      onClick={() => handleViewDetails(vendor.id)}
+                    >
+                      Preview
+                    </button>
+                  </span>
                 </div>
               ))
             )}
@@ -285,6 +315,7 @@ const AdminDashboardPage: React.FC = () => {
             <div className="admin-vendor-row admin-vendor-row--head">
               <span>Name</span>
               <span>Reason</span>
+              <span>Actions</span>
             </div>
 
             {reportedVendors.length === 0 ? (
@@ -296,6 +327,14 @@ const AdminDashboardPage: React.FC = () => {
                 <div key={vendor.id} className="admin-vendor-row">
                   <span>{vendor.name}</span>
                   <span>{vendor.flaggedReason}</span>
+                  <span className="admin-actions">
+                    <button
+                      className="admin-btn"
+                      onClick={() => handleViewDetails(vendor.id)}
+                    >
+                      Preview
+                    </button>
+                  </span>
                 </div>
               ))
             )}
