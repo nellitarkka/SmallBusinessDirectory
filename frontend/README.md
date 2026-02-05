@@ -1,73 +1,64 @@
-# React + TypeScript + Vite
+# Small Business Vendor Directory — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript frontend for the **Small Business Vendor Directory** platform.  
+Customers can browse vendor listings and contact vendors. Vendors can manage listings and submit them for admin approval. Admins can moderate submissions (approve/reject with reason).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
 
-## React Compiler
+- **React + TypeScript**
+- **Vite** (development server & build tool)
+- **React Router** (client-side routing)
+- **Vitest + React Testing Library** (frontend testing)
+- REST API integration via `src/services/api.ts`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Node.js** (recommended version: 18+)
+- **npm** (comes with Node.js)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## User Roles & Features
+### Customer
+- Browse approved vendor listings
+- Search and filter vendors
+- View vendor details
+- Save vendors to favorites
+- Contact vendors via messaging
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Vendor
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Vendor dashboard
+- Create and edit listings
+- Upload listing images
+- Save listings as drafts
+- Submit listings for admin review
+- View listing status (draft / submitted / active / rejected)
+- View rejection reasons and resubmit if rejected
+- Submission blocked when vendor account is unverified (UI-level restriction)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Admin
+- Admin dashboard
+- Review submitted listings
+- Approve listings
+- Reject listings with a rejection reason
+- View approved and rejected listings
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+
+#### Structure
+
+src/
+├── auth/         # Authentication context and role handling
+├── components/   # Reusable UI components
+├── css/          # Page-level and shared styles
+├── data/         # Frontend data models and stores
+├── pages/        # Route-level pages (customer, vendor, admin)
+├── services/     # API client and endpoint wrappers
+├── test/         # Frontend tests (Vitest)
+├── utils/        # Shared utilities
+├── App.tsx       # Root application component
+ 
