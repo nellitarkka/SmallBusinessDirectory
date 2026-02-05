@@ -50,7 +50,7 @@ GROUP BY v.id, u.email;
 
  DELETE FROM vendors WHERE id = 1;
 
--- After deletion, check:
+-- After deletion, we check:
 SELECT * FROM listings WHERE vendor_id = 1;
 
 

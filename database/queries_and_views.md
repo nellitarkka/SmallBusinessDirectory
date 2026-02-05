@@ -67,7 +67,7 @@ FROM public_listings_view
 WHERE title ILIKE '%plumbing%'
    OR description ILIKE '%plumbing%';
 
--- Filter by category (frontend/backend logic applies category filtering)
+-- Filter by category 
 -- Example: filter listings that have the category 'Plumber'
 SELECT *
 FROM public_listings_view
