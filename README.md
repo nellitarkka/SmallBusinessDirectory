@@ -26,6 +26,9 @@ Environment variables are used to securely configure database access, authentica
 - Email: Gmail SMTP
 - Access links: http://smallbusinessdirectory.francecentral.cloudapp.azure.com , http://20.199.16.127
 
+**Demo Access:**
+The application includes prefilled admin credentials so you can explore the admin dashboard functionality. Log in with the provided demo account to view listing approvals, category management, and administrative features.
+
 ## Repository Structure & Documentation
 
 ### Project Documentation (Deliverable I)

@@ -83,12 +83,13 @@ Migrations are versioned in database/migrations/.
 ---
 
 ## 7. Deployment Architecture (Azure)
-Reference: docs/DEPLOYMENT_AZURE.md
 
-- Frontend: Azure Static Web Apps
-- Backend: Azure App Service
-- Database/Auth: Supabase
-- CI: GitHub Actions
+- **Frontend & Backend**: Azure Virtual Machine with Docker and docker-compose
+- **Database**: PostgreSQL on Supabase
+- **Email**: Gmail SMTP
+- **Access**: http://smallbusinessdirectory.francecentral.cloudapp.azure.com or http://20.199.16.127
+
+Both the frontend (Vite + React) and backend (Node.js + Express) are containerized using Docker and orchestrated with docker-compose, then deployed on a single Azure VM. The application is fully functional and publicly accessible.
 
 Environment variables are configured in Azure (not committed).
 
