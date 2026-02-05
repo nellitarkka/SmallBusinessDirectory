@@ -52,13 +52,13 @@ Vendor dashboard
 #### Structure
 
 src/
-├── auth/         # Authentication context and role handling
-├── components/   # Reusable UI components
-├── css/          # Page-level and shared styles
-├── data/         # Frontend data models and stores
-├── pages/        # Route-level pages (customer, vendor, admin)
-├── services/     # API client and endpoint wrappers
-├── test/         # Frontend tests (Vitest)
-├── utils/        # Shared utilities
-├── App.tsx       # Root application component
+- auth/         # Authentication context and role handling
+- components/   # Reusable UI components
+- css/          # Page-level and shared styles
+- data/         # Frontend data models and stores
+- pages/        # Route-level pages (customer, vendor, admin)
+- services/     # API client and endpoint wrappers
+- test/         # Frontend tests (Vitest)
+- utils/        # Shared utilities
+- App.tsx       # Root application component
  
