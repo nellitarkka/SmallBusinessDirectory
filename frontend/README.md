@@ -58,7 +58,6 @@ src/
 - data/         # Frontend data models and stores
 - pages/        # Route-level pages (customer, vendor, admin)
 - services/     # API client and endpoint wrappers
-- test/         # Frontend tests (Vitest)
 - utils/        # Shared utilities
 - App.tsx       # Root application component
  
