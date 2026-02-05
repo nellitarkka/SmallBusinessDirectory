@@ -254,7 +254,18 @@ exports.getProfile = async (req, res) => {
     
     res.json({
       status: 'success',
-      data: { user }
+      data: { 
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          emailVerified: user.is_email_verified,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
+        }
+      }
     });
   } catch (error) {
     console.error('Get profile error:', error);
