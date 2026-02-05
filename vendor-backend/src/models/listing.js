@@ -238,6 +238,55 @@ const Listing = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Admin: get single listing by ID regardless of status
+  async findByIdAdmin(id) {
+    try {
+      const query = `
+        SELECT
+          l.id AS listing_id,
+          l.vendor_id,
+          v.user_id AS vendor_user_id,
+          v.business_name,
+          l.title,
+          l.description,
+          l.city,
+          l.contact_email,
+          l.contact_phone,
+          l.opening_hours,
+          l.status,
+          l.image_url,
+          l.created_at,
+          l.updated_at,
+          ARRAY_REMOVE(ARRAY_AGG(c.id ORDER BY c.id), NULL) AS category_ids,
+          ARRAY_REMOVE(ARRAY_AGG(c.name ORDER BY c.name), NULL) AS categories
+        FROM listings l
+        JOIN vendors v ON l.vendor_id = v.id
+        LEFT JOIN listing_categories lc ON lc.listing_id = l.id
+        LEFT JOIN categories c ON c.id = lc.category_id
+        WHERE l.id = $1
+        GROUP BY
+          l.id,
+          l.vendor_id,
+          v.user_id,
+          v.business_name,
+          l.title,
+          l.description,
+          l.city,
+          l.contact_email,
+          l.contact_phone,
+          l.opening_hours,
+          l.status,
+          l.image_url,
+          l.created_at,
+          l.updated_at
+      `;
+      const result = await pool.query(query, [id]);
+      return result.rows[0];
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

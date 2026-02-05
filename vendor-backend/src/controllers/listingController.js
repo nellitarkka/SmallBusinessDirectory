@@ -305,4 +305,29 @@ exports.uploadImage = async (req, res) => {
   }
 };
 
+// Get single listing as admin (any status)
+exports.getOneAdmin = async (req, res) => {
+  try {
+    const listing = await Listing.findByIdAdmin(req.params.id);
+    
+    if (!listing) {
+      return res.status(404).json({ 
+        status: 'error', 
+        message: 'Listing not found' 
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      data: { listing }
+    });
+  } catch (error) {
+    console.error('Get admin listing error:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      message: error.message 
+    });
+  }
+};
+
 module.exports = exports;

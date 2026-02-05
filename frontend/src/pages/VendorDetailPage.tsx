@@ -32,9 +32,9 @@ const VendorDetailPage: React.FC = () => {
     user?.role === "customer"
       ? "/customer/dashboard"
       : user?.role === "vendor"
-      ? "/vendor"
+      ? "/vendor/dashboard"
       : user?.role === "admin"
-      ? "/admin"
+      ? "/admin/dashboard"
       : "/";
 
   const vendorFromCache = useMemo(() => {
@@ -60,7 +60,10 @@ const VendorDetailPage: React.FC = () => {
       setLoadError(null);
 
       try {
-        const res = await listingsAPI.getById(id);
+        // Use admin endpoint if user is admin, otherwise use public endpoint
+        const res = user?.role === 'admin' 
+          ? await listingsAPI.getByIdAdmin(id)
+          : await listingsAPI.getById(id);
 
         if (res.status === "success") {
           const listing = res.data.listing;
@@ -83,7 +86,7 @@ const VendorDetailPage: React.FC = () => {
             openingHours: listing.opening_hours,
             imageUrl,
             vendorUserId: listing.vendor_user_id,
-            status: "active",
+            status: listing.status ?? "active",
           };
 
           if (!ignore) setLoadedVendor(mapped);
@@ -101,7 +104,7 @@ const VendorDetailPage: React.FC = () => {
     return () => {
       ignore = true;
     };
-  }, [id, vendorFromCache]);
+  }, [id, vendorFromCache, user]);
 
   const vendor = loadedVendor ?? vendorFromCache;
 

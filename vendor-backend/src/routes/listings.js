@@ -38,6 +38,7 @@ router.delete('/:id', authenticate, requireRole('vendor'), requireEmailVerificat
 
 // Admin routes
 router.get('/admin/all', authenticate, requireRole('admin'), listingController.getAllAdmin);
+router.get('/admin/:id', authenticate, requireRole('admin'), listingController.getOneAdmin);
 router.patch('/admin/:id/status', authenticate, requireRole('admin'), listingController.updateStatusAdmin);
 
 module.exports = router;
