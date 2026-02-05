@@ -13,6 +13,17 @@ A web-based Small Business Vendor Directory where vendors can post listings for 
 
 ---
 
+## Deployment
+
+The application follows a three-tier architecture and is fully deployed using free cloud platforms.  
+The frontend, built with Vite and React, is deployed on Cloudflare Pages, providing fast global static hosting. The backend, implemented with Node.js and Express, is deployed as a web service on Render. It connects to a PostgreSQL database hosted on Supabase and integrates email functionality via Gmail SMTP.
+
+Environment variables are used to securely configure database access, authentication secrets, and API communication between the frontend and backend. The deployed system is fully functional and publicly accessible.
+
+- Deployment links: http://smallbusinessdirectory.francecentral.cloudapp.azure.com , http://20.199.16.127
+
+---
+
 ## Repository Structure & Documentation
 
 ### Project Documentation
@@ -78,15 +89,6 @@ frontend/README.md
 ```
 
 ---
-
-## Deployment
-
-The application follows a three-tier architecture and is fully deployed using free cloud platforms.  
-The frontend, built with Vite and React, is deployed on Cloudflare Pages, providing fast global static hosting. The backend, implemented with Node.js and Express, is deployed as a web service on Render. It connects to a PostgreSQL database hosted on Supabase and integrates email functionality via Gmail SMTP.
-
-Environment variables are used to securely configure database access, authentication secrets, and API communication between the frontend and backend. The deployed system is fully functional and publicly accessible.
-
-- Deployment links: http://smallbusinessdirectory.francecentral.cloudapp.azure.com , http://20.199.16.127
 
 ## Individual Contributions
 
