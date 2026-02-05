@@ -181,6 +181,7 @@ export const listingsAPI = {
     contactPhone: string;
     contactEmail: string;
     openingHours: string;
+    categoryIds: number[];
     status: "draft" | "submitted" | "active" | "rejected";
   }>) => {
     return await apiCall(`/listings/${id}`, {
