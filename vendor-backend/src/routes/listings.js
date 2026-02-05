@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const listingController = require('../controllers/listingController');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requireEmailVerification } = require('../middleware/auth');
 const { validateCreateListing, validateUpdateListing } = require('../middleware/validators/listingValidators');
 const { listingCreationLimiter } = require('../middleware/rateLimiter');
 const multer = require('multer');
@@ -29,12 +29,12 @@ const upload = multer({
 router.get('/', listingController.getAll);
 router.get('/:id', listingController.getOne);
 
-// Protected vendor routes (authentication + vendor role required)
-router.post('/', authenticate, requireRole('vendor'), listingCreationLimiter, validateCreateListing, listingController.create);
+// Protected vendor routes (authentication + vendor role + email verification required)
+router.post('/', authenticate, requireRole('vendor'), requireEmailVerification, listingCreationLimiter, validateCreateListing, listingController.create);
 router.get('/vendor/my-listings', authenticate, requireRole('vendor'), listingController.getMine);
-router.patch('/:id', authenticate, requireRole('vendor'), validateUpdateListing, listingController.update);
-router.patch('/:id/image', authenticate, requireRole('vendor'), upload.single('image'), listingController.uploadImage);
-router.delete('/:id', authenticate, requireRole('vendor'), listingController.delete);
+router.patch('/:id', authenticate, requireRole('vendor'), requireEmailVerification, validateUpdateListing, listingController.update);
+router.patch('/:id/image', authenticate, requireRole('vendor'), requireEmailVerification, upload.single('image'), listingController.uploadImage);
+router.delete('/:id', authenticate, requireRole('vendor'), requireEmailVerification, listingController.delete);
 
 // Admin routes
 router.get('/admin/all', authenticate, requireRole('admin'), listingController.getAllAdmin);
