@@ -68,13 +68,12 @@ Run the complete test suite:
 npm test
 ```
 
-**Test Results**: 25/25 tests passing (100% success rate)
-- Authentication: 9/9 tests 
-- Listings: 6/6 tests 
-- Categories: 4/4 tests 
-- Favorites: 6/6 tests 
-
-**Test Coverage**: 55.36% overall
+**Test Results**: 142/142 tests passing (100% success rate)
+- Test Suites: 15/15 passing
+- Statements: 87.25%
+- Branch Coverage: 79.31%
+- Function Coverage: 100%
+- Line Coverage: 87.98%
 
 ## API Documentation
 
@@ -190,13 +189,53 @@ Remove from favorites (requires auth)
 
 ---
 
-## 🔒 Authorization
+## Messaging Endpoints
+
+### POST /api/messages
+Send a message to a vendor (requires verified email, auth)
+
+**Request:**
+```json
+{
+  "recipientId": "user_id",
+  "listingId": "listing_id (optional)",
+  "subject": "Message subject",
+  "body": "Message content"
+}
+```
+
+**Response:** `201 Created`
+
+### GET /api/messages/inbox
+Get user's received messages (requires auth)
+
+### GET /api/messages/sent
+Get user's sent messages (requires auth)
+
+### GET /api/messages/:id
+Get a specific message (requires auth, must be participant)
+
+### GET /api/messages/conversation/:conversationId
+Get messages in a conversation (requires auth)
+
+### PATCH /api/messages/:id/read
+Mark message as read (requires auth, must be recipient)
+
+### DELETE /api/messages/:id
+Delete a message (requires auth, must be participant)
+
+### GET /api/messages/unread/count
+Get count of unread messages (requires auth)
+
+---
+
+## Authorization
 
 **Role-Based Access Control:**
 - Public: GET listings, GET categories
-- Customer: All favorites operations
-- Vendor: Create/update/delete own listings
-- Admin: Category management
+- Customer: All favorites and messaging operations
+- Vendor: Create/update/delete own listings, messaging operations
+- Admin: Category management, listing status updates
 
 **Error Responses:**
 - `401 Unauthorized` - Missing/invalid token
@@ -212,55 +251,33 @@ vendor-backend/
 ├── src/
 │   ├── config/database.js
 │   ├── middleware/auth.js
+│   ├── middleware/rateLimiter.js
 │   ├── models/
+│   │   ├── user.js
+│   │   ├── listing.js
+│   │   ├── message.js
+│   │   ├── category.js
+│   │   ├── favorite.js
+│   │   └── vendor.js
 │   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── listingController.js
+│   │   ├── messageController.js
+│   │   ├── categoryController.js
+│   │   └── favoriteController.js
+│   ├── services/emailService.js
 │   ├── routes/
+│   ├── middleware/validators/
 │   └── app.js
 ├── __tests__/
-│   ├── auth.test.js
-│   ├── listings.test.js
-│   ├── categories.test.js
-│   └── favorites.test.js
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── services/
+│   ├── validation.test.js
+│   ├── helpers.js
+│   └── setup.js
 ├── .env
 ├── package.json
 └── README.md
 ```
-
-##  Collaboration Workflow
-
-**Branching Strategy:**
-- `main` - Production code
-- `develop` - Integration branch
-- `feature/*` - New features
-- `bugfix/*` - Bug fixes
-
-**Commit Convention:**
-```
-<type>: <description>
-Example: feat: add favorites endpoint
-```
-
-##  Deployment
-
-**Environment Variables:**
-```env
-PORT=3000
-DATABASE_URL=postgresql://...
-JWT_SECRET=your_secret
-NODE_ENV=production
-```
-
-##  Database
-
-PostgreSQL with tables:
-- users, vendors, listings
-- categories, favorites
-- listing_categories (junction table)
-
-##  Contributing
-
-1. Fork repository
-2. Create feature branch
-3. Write tests
-4. Submit pull request
-
