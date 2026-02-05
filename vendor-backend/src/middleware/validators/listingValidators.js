@@ -50,7 +50,7 @@ const validateCreateListing = [
     .isArray({ min: 1 }).withMessage('At least one category is required')
     .customSanitizer((value) => {
       // Convert all elements to integers
-      return value.map(id => parseInt(id, 10));
+      return Array.isArray(value) ? value.map(id => parseInt(id, 10)) : value;
     })
     .custom((value) => {
       if (!value.every(id => Number.isInteger(id) && id > 0)) {
