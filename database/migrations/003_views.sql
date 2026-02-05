@@ -1,5 +1,5 @@
 -- 003_views.sql
--- Views for common read queries (Week 3)
+-- Views for common read queries
 
 -- 1. Public listings view
 --    - Only active listings

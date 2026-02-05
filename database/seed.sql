@@ -63,7 +63,7 @@ ON CONFLICT (name) DO NOTHING;
 -- 4. Listings (for multiple vendors)
 ------------------------------------------------------------
 
--- Helper: get vendor ids
+-- get vendor ids
 WITH v1 AS (
     SELECT v.id AS vendor_id FROM vendors v
     JOIN users u ON v.user_id = u.id
@@ -331,7 +331,7 @@ ON CONFLICT DO NOTHING;
 -- 6. Favorites (customers save multiple listings)
 ------------------------------------------------------------
 
--- Helper: user and listing ids
+-- user and listing ids
 WITH
     u1 AS (SELECT id AS user_id FROM users WHERE email = 'customer1@example.com'),
     u2 AS (SELECT id AS user_id FROM users WHERE email = 'customer2@example.com'),
