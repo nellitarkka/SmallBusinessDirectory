@@ -1,0 +1,74 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'vendor-backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'vendor-backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    defaults:
+      run:
+        working-directory: ./vendor-backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: './vendor-backend/package-lock.json'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret-key-for-ci
+          DATABASE_URL: postgres://test:test@localhost:5432/test
+          EMAIL_HOST: smtp.test
+          EMAIL_PORT: 587
+          EMAIL_USER: test@example.com
+          EMAIL_PASS: testpass
+          FRONTEND_URL: http://localhost:5173
+      
+      - name: Check test coverage
+        run: |
+          echo "Checking coverage thresholds..."
+          npm test -- --coverage --coverageThreshold='{"global":{"branches":75,"functions":75,"lines":80,"statements":80}}'
+        continue-on-error: false
+      
+      - name: Upload coverage to Codecov (optional)
+        if: matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./vendor-backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
+      
+      - name: Archive coverage report
+        if: always() && matrix.node-version == '20.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: vendor-backend/coverage/
+          retention-days: 30
