@@ -59,3 +59,7 @@ src/
 - services/     # API client and endpoint wrappers
 - App.tsx       # Root application component
  
+#### dotenv
+```
+VITE_API_URL=http://localhost:3000/api
+```
